@@ -1538,7 +1538,7 @@ StringBuffer 对方法加了同步锁，线程安全，效率略低于 StringBui
 
 **使用好处：**
 
-​		此机制保证JDK核心类的优先加载；使得Java程序的稳定运⾏，可以避免类的重复加载，也保证了 Java 的核⼼ API 不被篡改。如果不⽤没有使⽤双亲委派模型，⽽是每个类加载器加载⾃⼰的话就会出现⼀些问题，⽐如我们编写⼀个称为  java.lang.Object 类的话，那么程序运⾏的时候，系统就会出现多个不同的Object 类。
+​		此机制保证JDK核心类的优先加载；使得Java程序的稳定运⾏，可以避免类的重复加载，也**保证了 Java 的核⼼ API 不被篡改**。如果不⽤没有使⽤双亲委派模型，⽽是每个类加载器加载⾃⼰的话就会出现⼀些问题，⽐如我们编写⼀个称为  java.lang.Object 类的话，那么程序运⾏的时候，系统就会出现多个不同的Object 类。
 
 **破坏双亲委派机制：**
 
@@ -1561,6 +1561,10 @@ StringBuffer 对方法加了同步锁，线程安全，效率略低于 StringBui
 6. 都没有加载成功的话，抛出异常。
 
 总结一下以上步骤，WebAppClassLoader 加载类的时候，故意打破了JVM 双亲委派机制，绕开了 AppClassLoader，直接先使用 ExtClassLoader 来加载类。
+
+补充：
+
+tomcat 为了实现隔离性，没有遵守这个约定，每个webappClassLoader加载自己的目录下的class文件，不会传递给父类加载器
 
 
 
@@ -2280,7 +2284,7 @@ less $pid.log
 
 #### 5、创建线程方式
 
-**实现 Runnable 接口**（优先使用）
+**实现 Runnable 接口**（优先使用，不会返回结果或抛出检查异常）
 
 ```java
 public class RunnableThread implements Runnable {
@@ -2307,7 +2311,7 @@ public class ExtendsThread extends Thread {
 }
 ```
 
-**使用线程池**（底层都是实现run方法）
+**使用线程池**（底层都是实现run方法，推荐使用ThreadPoolExecutor，不推荐使用Executors 去创建，可能导致OOM）
 
 ```java
 static class DefaultThreadFactory implements ThreadFactory {
