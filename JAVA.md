@@ -3437,7 +3437,11 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 
 ​		指当主库执行完一个事务，所有的从库都执行了该事务才返回给客户端。因为需要等待所有从库执行完该事务才能返回，所以全同步复制的**性能必然会收到严重的影响**。
 
+**关于 redo log 、binlog、undolog 的区别：**
 
+![](http://image.leeyom.top/blog/20210728102422.png)
+
+数据库事务四大特性中有一个是**原子性**，具体来说就是 **原子性是指对数据库的一系列操作，要么全部成功，要么全部失败，不可能出现部分成功的情况**。实际上，**原子性**底层就是通过`undo log`实现的。`undo log`主要记录了数据的逻辑变化，比如一条`INSERT`语句，对应一条`DELETE`的`undo log`，对于每个`UPDATE`语句，对应一条相反的`UPDATE`的`undo log`，这样在发生错误时，就能回滚到事务之前的数据状态。同时，`undo log`也是`MVCC`(多版本并发控制)实现的关键。
 
 #### 3、集群架构
 
