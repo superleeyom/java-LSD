@@ -365,7 +365,7 @@
 
 **基于TCP的协议：**HTTP、FTP、SMTP
 
-​	**基于UDP的协议：**RIP、DNS、SNMP
+**基于UDP的协议：**RIP、DNS、SNMP
 
 
 
@@ -4455,6 +4455,8 @@ public void write(String key,Object data){
 
 #### 5、分布式锁
 
+https://xiaomi-info.github.io/2019/12/17/redis-distributed-lock/
+
 **利用Watch实现Redis乐观锁**
 
 ​	乐观锁基于CAS(Compare And Swap)比较并替换思想，不会产生锁等待而消耗资源，但是需要反复的重试，但也是因为重试的机制，能比较快的响应。因此我们可以利用redis来实现乐观锁**（秒杀）**。具体思路如下:
@@ -4514,9 +4516,20 @@ Object result = jedis.eval(lua, Collections.singletonList(lockKey),
 **与zookeeper分布式锁对比**
 
 - redis 分布式锁，其实**需要自己不断去尝试获取锁**，比较消耗性能。
+
 - zk 分布式锁，注册个监听器即可，不需要不断主动尝试获取锁，ZK获取锁会按照加锁的顺序，所以是公平锁，性能和mysql差不多，和redis差别大
 
+  - zookeeper 分布式锁
 
+    临时节点
+    1. 尝试创建临时 znode，此时创建成功了就获取了这个锁
+    2. 这个时候别的客户端来创建锁会失败，只能注册个监听器监听这个锁
+    3. 释放锁就是删除这个 znode，一旦释放掉就会通知客户端，然后有一个等待着的客户端就可以再次重新加锁
+
+    临时顺序节点
+    1. 创建临时顺序节点 znode，此时创建成功了就获取了这个锁
+    2. 后面的每个人都会去监听排在自己前面的那个人创建的 node 上
+    3. 一旦某个人释放了锁，排在自己后面的人就会被 ZooKeeper 给通知，一旦被通知了之后，就 ok 了，自己就获取到了锁，就可以执行代码了
 
 
 
