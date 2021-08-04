@@ -2473,7 +2473,7 @@ JDK 内置的拒绝策略如下：
 
 ​		同步代码块是利用 monitorenter 和 monitorexit 指令实现的，而同步方法则是利用 flags 实现的。
 
-
+可以参考这篇文章：https://segmentfault.com/a/1190000022904663
 
 #### **3、ReenTrantLock底层实现**
 
@@ -3215,6 +3215,8 @@ InnoDB 支持多粒度锁（multiple granularity locking），它允许行级锁
 
 
 #### **3、B+树索引** 
+
+https://draveness.me/whys-the-design-mysql-b-plus-tree/
 
 ![](http://image.leeyom.top/blog/20210730155356.png)
 
