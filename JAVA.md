@@ -2400,7 +2400,7 @@ JDK 内置的拒绝策略如下：
 
 **因为以上方式都存在弊端：**
 
-​		FixedThreadPool 和 SingleThreadExecutor ： 允许请求的**队列⻓度**为 Integer.MAX_VALUE，会导致OOM。
+​		FixedThreadPool 和 SingleThreadExecutor ： 允许请求的**任务队列⻓度**为 Integer.MAX_VALUE，会导致OOM。
 ​		CachedThreadPool 和 ScheduledThreadPool ： 允许创建的**线程数量**为 Integer.MAX_VALUE，会导致OOM。
 
 手动创建的线程池底层使用的是ArrayBlockingQueue可以防止OOM。
@@ -2413,13 +2413,15 @@ JDK 内置的拒绝策略如下：
 
 ​	CPU 密集的意思是该任务需要大量的运算，而没有阻塞，CPU 一直全速运行。
 
-​	CPU 密集型任务尽可能的少的线程数量，一般为 CPU 核数 + 1 个线程的线程池。
+​	CPU 密集型任务尽可能的少的线程数量，减少线程上下文的切换，一般为 CPU 核数 + 1 个线程的线程池。
 
 - IO 密集型（2*n）
 
 ​	由于 IO 密集型任务线程并不是一直在执行任务，可以多分配一点线程数，如 CPU * 2 
 
 ​	也可以使用公式：CPU 核心数 *（1+平均等待时间/平均工作时间）。
+
+这里的n指的是cpu的核心数
 
 
 
@@ -2469,7 +2471,11 @@ JDK 内置的拒绝策略如下：
 
 ​		对象头是我们需要关注的重点，它是synchronized实现锁的基础，因为synchronized申请锁、上锁、释放锁都与对象头有关。对象头主要结构是由`Mark Word` 组成，**其中`Mark Word`存储对象的hashCode、锁信息或分代年龄或GC标志等信息**。
 
+![](http://image.leeyom.top/blog/20210806122301.png)
+
 ​		锁也分不同状态，JDK6之前只有两个状态：无锁、有锁（重量级锁），而在JDK6之后对synchronized进行了优化，新增了两种状态，总共就是四个状态：**无锁状态、偏向锁、轻量级锁、重量级锁**，其中无锁就是一种状态了。锁的类型和状态在对象头`Mark Word`中都有记录，在申请锁、锁升级等过程中JVM都需要读取对象的`Mark Word`数据。
+
+![](http://image.leeyom.top/blog/20210806143520.png)
 
 ​		同步代码块是利用 monitorenter 和 monitorexit 指令实现的，而同步方法则是利用 flags 实现的。
 
@@ -2485,7 +2491,7 @@ JDK 内置的拒绝策略如下：
 
 **底层实现：**
 
-​		ReenTrantLock的实现是一种自旋锁，通过循环调用CAS操作来实现加锁。它的性能比较好也是因为避免了使线程进入内核态的阻塞状态。想尽办法避免线程进入内核的阻塞状态是我们去分析和理解锁设计的关键钥匙。
+​		ReenTrantLock的实现是一种自旋锁，通过循环调用CAS操作来实现加锁。它的性能比较好也是因为**避免了使线程进入内核态的阻塞状态**。想尽办法避免线程进入内核的阻塞状态是我们去分析和理解锁设计的关键钥匙。
 
 **和synchronized区别：**
 
@@ -2556,7 +2562,7 @@ JDK 内置的拒绝策略如下：
 
 ​	【5】**使用CAS：**
 
-​		如果需要同步的操作执行速度非常快，并且线程竞争并不激烈，这时候使用cas效率会更高，因为加锁会导致线程的上下文切换，如果上下文切换的耗时比同步操作本身更耗时，且线程对资源的竞争不激烈，使用volatiled+cas操作会是非常高效的选择；
+​		如果需要同步的操作执行速度非常快，并且线程竞争并不激烈，这时候使用cas效率会更高，因为**加锁会导致线程的上下文切换**，如果上下文切换的耗时比同步操作本身更耗时，且线程对资源的竞争不激烈，使用volatiled+cas操作会是非常高效的选择；
 
 
 
@@ -2592,8 +2598,8 @@ JDK 内置的拒绝策略如下：
 
 **ThreadLocal简介：**
 
-​		通常情况下，我们创建的变量是可以被任何⼀个线程访问并修改的。如果想实现每⼀个线程都有⾃⼰的
-专属本地变量该如何解决呢？ JDK中提供的 ThreadLocal 类正是为了解决这样的问题。类似操作系统中的TLAB
+​		通常情况下，我们创建的变量是可以被任何⼀个线程访问并修改的。如果想实现每⼀个**线程都有⾃⼰的**
+**专属本地变量**该如何解决呢？ JDK中提供的 ThreadLocal 类正是为了解决这样的问题。类似操作系统中的TLAB
 
 **原理：**
 
@@ -2621,7 +2627,7 @@ private static ThreadLocal<SimpleDateFormat> format1 = new ThreadLocal<SimpleDat
 
 **ThreadLocal内存泄漏的场景** 
 
-​		实际上 ThreadLocalMap 中使用的 key 为 ThreadLocal 的弱引用，⽽ value 是强引⽤。弱引用的特点是，如果这个对象持有弱引用，那么在下一次垃圾回收的时候必然会被清理掉。
+​		实际上 ThreadLocalMap 中使用的 **key 为 ThreadLocal 的弱引用，⽽ value 是强引⽤**。弱引用的特点是，如果这个对象持有弱引用，那么在下一次垃圾回收的时候必然会被清理掉。
 
 ​		所以如果 ThreadLocal 没有被外部强引用的情况下，在垃圾回收的时候会被清理掉的，这样一来 ThreadLocalMap中使用这个 ThreadLocal 的 key 也会被清理掉。但是，value 是强引用，不会被清理，这样一来就会出现 key 为 null 的 value。 假如我们不做任何措施的话，value 永远⽆法被GC 回收，如果线程长时间不被销毁，可能会产⽣内存泄露。
 
