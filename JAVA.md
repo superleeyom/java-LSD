@@ -4245,6 +4245,10 @@ public void write(String key,Object data){
 
 ​	3）采用**布隆过滤器**，将所有可能存在的数据哈希到一个足够大的 bitmap 中，一个一定不存在的数据会被这个 bitmap 拦截掉，从而避免了对底层存储系统的查询压力。（宁可错杀一千不可放过一人）
 
+补充：**布隆过滤器说某个元素存在，小概率会误判（哈希冲突）。布隆过滤器说某个元素不在，那么这个元素一定不在。**
+
+[布隆过滤器原理](https://github.com/Snailclimb/JavaGuide/blob/master/docs/dataStructures-algorithms/data-structure/bloom-filter.md)
+
 
 
 #### **3、缓存击穿**
@@ -4275,7 +4279,7 @@ public void write(String key,Object data){
 
 - 不采用 rehash 漂移策略，而采用缓存分层策略，尽量避免脏数据产生。
 
-
+http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg
 
 #### 5、数据并发竞争
 
@@ -6364,3 +6368,103 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 - 基于JWT的Token，数据从cache或者数据库中获取
 - 基于Tomcat的Redis，简单配置conf文件
 - 基于Spring的Redis，支持SpringCloud和Springb
+
+
+
+## 十、算法题
+
+### Java数组实现队列
+
+![](http://image.leeyom.top/blog/20210805155152.png)
+
+```java
+public class MyCircularQueue {
+    private int[] data;
+    private int size; // 队列中元素的个数
+    private int head; // 下次出队元素的下标，时刻维持有效队首
+    private int tail; // 上次入队元素的下标，时刻维持有效队尾
+
+    public MyCircularQueue(int k) {
+        data = new int[k];
+        tail = -1; // 从未进行入队操作，取 -1
+    }
+
+    public boolean enQueue(int value) {
+        if (isFull()) return false;
+        size++;
+        tail++; // 计算新入队元素下标
+        if (tail == data.length) tail = 0;
+        data[tail] = value;
+        return true;
+    }
+
+    public boolean deQueue() {
+        if (isEmpty()) return false;
+        size--;
+        head++; // 计算下次出队元素下标
+        if (head == data.length) head = 0;
+        return true;
+    }
+
+    public int Front() {
+        if (isEmpty()) {
+            return -1;
+        } else {
+            return data[head];
+        }
+    }
+
+    public int Rear() {
+        if (isEmpty()) {
+            return -1;
+        } else {
+            return data[tail];
+        }
+    }
+
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    public boolean isFull() {
+        return size == data.length;
+    }
+
+```
+
+### 将一个字符串转整型
+
+简单版本
+
+```java
+public static int toint(String str) {
+	if (str == null || str.length() == 0) {
+		return 0;
+	}
+	char[] chars = str.toCharArray();
+	int total = 0;
+	Map<Character, Integer> map = new HashMap<Character, Integer>() {
+		{
+			put('0', 0);
+			put('1', 1);
+			put('2', 2);
+			put('3', 3);
+			put('4', 4);
+			put('5', 5);
+			put('6', 6);
+			put('7', 7);
+			put('8', 8);
+			put('9', 9);
+		}
+	}
+	;
+	int size = 1;
+	for (int i = chars.length - 1; i >= 0; i--) {
+		Integer item = map.get(chars[i]);
+		total += (item * size);
+		size *= 10;
+	}
+	return total;
+}
+```
+
