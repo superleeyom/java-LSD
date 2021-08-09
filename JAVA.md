@@ -2691,7 +2691,7 @@ private static ThreadLocal<SimpleDateFormat> format1 = new ThreadLocal<SimpleDat
 
 **底层实现：**
 
-​		“观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，会多出一个lock前缀指令”
+​		“观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，**会多出一个lock前缀指令**”
 
 　　lock前缀指令实际上相当于一个**内存屏障**（也成内存栅栏），内存屏障会提供3个功能：
 
