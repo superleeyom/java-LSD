@@ -423,7 +423,7 @@
 
 ​	**TCP报文格式：**
 
-​		<img src="https://farm1.staticflickr.com/792/27194088468_4cb0141fc8_b.jpg" style="zoom: 67%;" />
+![](https://farm1.staticflickr.com/792/27194088468_4cb0141fc8_b.jpg)
 
 ​	**源端口号和目的端口号**：
 
@@ -471,7 +471,7 @@
 
 ​	**UDP报文格式：**
 
-​	<img src="https://appwk.baidu.com/naapi/doc/view?ih=482&o=png_6_0_0_176_917_504_247_892.979_1262.879&iw=986&ix=0&iy=0&aimw=986&rn=1&doc_id=182d935c3186bceb18e8bb77&pn=1&sign=b88bda03b9954e506622f97b8b2ae438&type=1&app_ver=2.9.8.2&ua=bd_800_800_IncredibleS_2.9.8.2_2.3.7&bid=1&app_ua=IncredibleS&uid=&cuid=&fr=3&Bdi_bear=WIFI&from=3_10000&bduss=&pid=1&screen=800_800&sys_ver=2.3.7" style="zoom:50%;" />
+​	![](http://image.leeyom.top/blog/20210811160037.png)
 
 ​	**端口号**：
 
@@ -489,7 +489,7 @@
 
 ​	**IP报文格式：**普通的IP首部长为20个字节，除非含有可选项字段。
 
-​				<img src="https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=1614312792,1954581760&fm=26&gp=0.jpg" style="zoom:67%;" />
+![](https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=1614312792,1954581760&fm=26&gp=0.jpg)
 
 ​	**4位版本**：
 
@@ -1017,7 +1017,7 @@ class LRUCache {
 
 #### 5、泛型以及泛型擦除 
 
-参考：https://blog.csdn.net/baoyinwang/article/details/107341997
+参考：https://github.com/superleeyom/blog/issues/1
 
 **泛型：**
 
@@ -1065,7 +1065,7 @@ class LRUCache {
 
 #### **7、Java异常体系** 
 
-​				<img src="https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=3137389296,1222888772&fm=26&gp=0.jpg" style="zoom:67%;" />
+![](https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=3137389296,1222888772&fm=26&gp=0.jpg)
 
 Throwable 是 Java 语言中所有错误或异常的超类。下一层分为 Error 和 Exception
 
@@ -1175,11 +1175,21 @@ for(Integer i:list){
 
 角度：数据结构+扩容情况+put查找的详细过程+哈希函数+容量为什么始终都是2^N，JDK1.7与1.8的区别。
 
-参考：https://www.jianshu.com/p/9fe4cb316c05
+参考：
+
+- https://snailclimb.gitee.io/javaguide/#/docs/java/collection/HashMap(JDK1.8)%E6%BA%90%E7%A0%81+%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%88%86%E6%9E%90
 
 **数据结构：**
 
 ​		HashMap在底层数据结构上采用了数组＋链表＋红黑树，通过散列映射来存储键值对数据
+
+1.8之前：
+
+![](http://image.leeyom.top/blog/20210811155739.png)
+
+1.8之后：
+
+![](http://image.leeyom.top/blog/20210811155836.png)
 
 **扩容情况：**
 
@@ -1191,7 +1201,7 @@ for(Integer i:list){
 
 **put操作步骤：**
 
-​				<img src="https://s0.lgstatic.com/i/image3/M01/73/D9/CgpOIF5rDYmATP43AAB3coc0R64799.png" alt="img" style="zoom:67%;" />
+![](https://s0.lgstatic.com/i/image3/M01/73/D9/CgpOIF5rDYmATP43AAB3coc0R64799.png)
 
 ​	1、判断数组是否为空，为空进行初始化;
 
@@ -1259,21 +1269,11 @@ for(Integer i:list){
 
 ​		序列化ID：serialVersionUID不一致的时候，导致反序列化失败
 
-
-
 #### **6、String**
 
-String 使用**数组**存储内容，数组使用 **final** 修饰，因此 String 定义的字符串的值也是**不可变的**
+String 使用**数组**存储内容，数组使用 **final** 修饰，因此 String 定义的字符串的值也是**不可变的**，线程安全
 
-StringBuffer 对方法加了同步锁，线程安全，效率略低于 StringBuilder
-
-
-
-
-
-
-
-
+StringBuffer 对方法加了同步锁synchronize，线程安全，效率略低于 StringBuilder
 
 ### 设计模式与原则
 
@@ -1293,9 +1293,15 @@ StringBuffer 对方法加了同步锁，线程安全，效率略低于 StringBui
 
 **实现方式**：
 
-​	**饿汉式**：线程安全速度快
+​	**饿汉式**：线程安全速度快，类加载就初始化，浪费内存
+
+![](http://image.leeyom.top/blog/20210810144149.png)
 
 ​	**懒汉式**：双重检测锁，第一次减少锁的开销、第二次防止重复、volatile防止重排序导致实例化未完成
+
+![](http://image.leeyom.top/blog/20210810144549.png)
+
+![](http://image.leeyom.top/blog/20210810144400.png)
 
 ​	**静态内部类**：线程安全利用率高
 
@@ -1372,12 +1378,6 @@ StringBuffer 对方法加了同步锁，线程安全，效率略低于 StringBui
 | Byte,Short,Integer,Long | [-128, 127]   |
 | Character               | [0, 127]      |
 | Boolean                 | [false, true] |
-
-
-
-
-
-
 
 # 二、JVM篇 
 
@@ -1492,7 +1492,7 @@ StringBuffer 对方法加了同步锁，线程安全，效率略低于 StringBui
 
 **过程：加载、验证、准备、解析、初始化**
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gobnnbem87j30eq0cogmj.jpg" alt="img" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gobnnbem87j30eq0cogmj.jpg)
 
 **加载阶段：**
 
@@ -1626,9 +1626,7 @@ tomcat 为了实现隔离性，没有遵守这个约定，每个webappClassLoade
 
 ![img](https://tva1.sinaimg.cn/large/008eGmZEly1gobnmip32vj30l109q0t3.jpg)
 
-
-
-##### **MinorGC、MajorGC、FullGC** 
+**MinorGC、MajorGC、FullGC的区别：** 
 
 **MinorGC** 在年轻代空间不足的时候发生，
 
@@ -2176,7 +2174,7 @@ public static void main(String[] args) {
 
 再看一个例子，关于文件处理器的应用，在读取或者写入一些文件之后，由于发生了一些异常，**close 方法又没有放在 finally** 块里面，造成了文件句柄的泄漏。由于文件处理十分频繁，产生了严重的内存泄漏问题。
 
-#### 6：CPU飙高 | 死循环
+#### 6、CPU飙高 | 死循环
 
 我们有个线上应用，单节点在运行一段时间后，CPU 的使用会飙升，一旦飙升，一般怀疑某个业务逻辑的计算量太大，或者是触发了死循环（比如著名的 HashMap 高并发引起的死循环），但排查到最后其实是 GC 的问题。        
 
@@ -2231,7 +2229,7 @@ less $pid.log
 
 **线程状态：创建、就绪、运行、阻塞、死亡**
 
-<img src="https://s0.lgstatic.com/i/image3/M01/77/29/Cgq2xl5xxGKAKBpeAAEw9Ifr07Y662.png" alt="img" style="zoom: 40%;" />
+![](https://s0.lgstatic.com/i/image3/M01/77/29/Cgq2xl5xxGKAKBpeAAEw9Ifr07Y662.png)
 
 
 
@@ -2248,7 +2246,7 @@ less $pid.log
 | yiled     | 停止当前线程，让同等优先权的线程运行                   | 用Thread类调用   |
 | join      | 使当前线程停下来等待，直至另一个调用join方法的线程终止 | 用线程对象调用   |
 
-<img src="https://s0.lgstatic.com/i/image/M00/80/24/Ciqc1F_Qfy2ACkrLAAD2DLkc2qw212.png" alt="img" style="zoom:67%;" />
+![](https://s0.lgstatic.com/i/image/M00/80/24/Ciqc1F_Qfy2ACkrLAAD2DLkc2qw212.png)
 
 #### **3、阻塞唤醒过程** 
 
@@ -2362,7 +2360,7 @@ public ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTim
 
 #### **2、线程处理任务过程：**
 
-<img src="https://s0.lgstatic.com/i/image3/M01/78/50/Cgq2xl5zjxGAXOA-AABF0Dv8GMI518.png" alt="img" style="zoom: 67%;" />
+![](https://s0.lgstatic.com/i/image3/M01/78/50/Cgq2xl5zjxGAXOA-AABF0Dv8GMI518.png)
 
 1. 当线程池小于corePoolSize，新提交任务将创建一个新线程执行任务，即使此时线程池中存在空闲线程。
 2. 当线程池达到corePoolSize时，新提交任务将被放入 workQueue 中，等待线程池中任务调度执行。
@@ -2378,9 +2376,7 @@ JDK 内置的拒绝策略如下：
 
 ​		**AbortPolicy：**直接抛出异常，阻止系统正常运行。可以根据业务逻辑选择重试或者放弃提交等策略。
 
-​		**CallerRunsPolicy ：**只要线程池未关闭，该策略直接在调用者线程中，运行当前被丢弃的任务。
-
-​				不会造成任务丢失，同时减缓提交任务的速度，给执行任务缓冲时间。
+​		**CallerRunsPolicy ：**只要线程池未关闭，该策略直接在调用者线程中，运行当前被丢弃的任务。不会造成任务丢失，同时减缓提交任务的速度，给执行任务缓冲时间。
 
 ​		**DiscardOldestPolicy ：**丢弃最老的一个请求，也就是即将被执行的任务，并尝试再次提交当前任务。
 
@@ -2388,20 +2384,19 @@ JDK 内置的拒绝策略如下：
 
 #### **4、Execuors类实现线程池**
 
-<img src="https://s0.lgstatic.com/i/image3/M01/63/5A/CgpOIF4z1EiAFjNQAAAtVe5xjgQ999.png" alt="img" style="zoom: 50%;" />
+![](https://s0.lgstatic.com/i/image3/M01/63/5A/CgpOIF4z1EiAFjNQAAAtVe5xjgQ999.png)
 
 - **newSingleThreadExecutor()：**只有一个线程的线程池，任务是顺序执行，适用于一个一个任务执行的场景
 - **newCachedThreadPool()：**线程池里有很多线程需要同时执行，60s内复用，适用执行很多短期异步的小程序或者负载较轻的服务
 - **newFixedThreadPool()：**拥有固定线程数的线程池，如果没有任务执行，那么线程会一直等待，适用执行长期的任务。
 - **newScheduledThreadPool()：**用来调度即将执行的任务的线程池
 - **newWorkStealingPool()**：底层采用forkjoin的Deque，采用独立的任务队列可以减少竞争同时加快任务处理
-- 
-- <img src="https://s0.lgstatic.com/i/image2/M01/AF/80/CgoB5l3kzomAckv5AAAxf6FCPco696.png" alt="img" style="zoom:50%;" />
+- ![](https://s0.lgstatic.com/i/image2/M01/AF/80/CgoB5l3kzomAckv5AAAxf6FCPco696.png)
 
 **因为以上方式都存在弊端：**
 
-​		FixedThreadPool 和 SingleThreadExecutor ： 允许请求的**任务队列⻓度**为 Integer.MAX_VALUE，会导致OOM。
-​		CachedThreadPool 和 ScheduledThreadPool ： 允许创建的**线程数量**为 Integer.MAX_VALUE，会导致OOM。
+​		FixedThreadPool 和 SingleThreadExecutor ： 允许请求的**任务队列⻓度**为 Integer.MAX_VALUE，会**导致OOM**。
+​		CachedThreadPool 和 ScheduledThreadPool ： 允许创建的**线程数量**为 Integer.MAX_VALUE，会**导致OOM**。
 
 手动创建的线程池底层使用的是ArrayBlockingQueue可以防止OOM。
 
@@ -2409,7 +2404,7 @@ JDK 内置的拒绝策略如下：
 
 #### **5、线程池大小设置**
 
-- CPU 密集型（n+1）
+- CPU 密集型（n+1 or n-1）
 
 ​	CPU 密集的意思是该任务需要大量的运算，而没有阻塞，CPU 一直全速运行。
 
@@ -2445,7 +2440,7 @@ JDK 内置的拒绝策略如下：
 
 **缺点：**
 
-​		[ABA问题-知乎](https://www.zhihu.com/question/23281499/answer/854522984)
+​		ABA问题：T1读取内存变量为A,T2修改内存变量为B,T2修改内存变量为A,这时T1再CAS操作A时是可行的。
 
 ​		高并发的情况下，很容易发生并发冲突，如果CAS一直失败，那么就会一直重试，浪费CPU资源
 
@@ -2473,13 +2468,15 @@ JDK 内置的拒绝策略如下：
 
 ![](http://image.leeyom.top/blog/20210806122301.png)
 
-​		锁也分不同状态，JDK6之前只有两个状态：无锁、有锁（重量级锁），而在JDK6之后对synchronized进行了优化，新增了两种状态，总共就是四个状态：**无锁状态、偏向锁、轻量级锁、重量级锁**，其中无锁就是一种状态了。锁的类型和状态在对象头`Mark Word`中都有记录，在申请锁、锁升级等过程中JVM都需要读取对象的`Mark Word`数据。
+​		锁也分不同状态，JDK6之前只有两个状态：无锁、有锁（重量级锁），而在JDK6之后对synchronized进行了优化，新增了两种状态，总共就是四个状态：**无锁状态、偏向锁、轻量级锁（自旋锁）、重量级锁**，其中无锁就是一种状态了。锁的类型和状态在对象头`Mark Word`中都有记录，在申请锁、锁升级等过程中JVM都需要读取对象的`Mark Word`数据。
 
 ![](http://image.leeyom.top/blog/20210806143520.png)
 
-​		同步代码块是利用 monitorenter 和 monitorexit 指令实现的，而同步方法则是利用 flags 实现的。
+同步代码块是利用 monitorenter 和 monitorexit 指令实现的，**其中 `monitorenter` 指令指向同步代码块的开始位置，`monitorexit` 指令则指明同步代码块的结束位置。**
 
-可以参考这篇文章：https://segmentfault.com/a/1190000022904663
+而同步方法则是利用 flags 指令实现的， `ACC_SYNCHRONIZED` 标识。
+
+关于synchronize的锁升级，可以参考这篇文章：https://segmentfault.com/a/1190000022904663
 
 #### **3、ReenTrantLock底层实现**
 
@@ -2491,13 +2488,13 @@ JDK 内置的拒绝策略如下：
 
 **底层实现：**
 
-​		ReenTrantLock的实现是一种自旋锁，通过循环调用CAS操作来实现加锁。它的性能比较好也是因为**避免了使线程进入内核态的阻塞状态**。想尽办法避免线程进入内核的阻塞状态是我们去分析和理解锁设计的关键钥匙。
+​		ReenTrantLock的实现是一种**自旋锁**，通过循环调用CAS操作来实现加锁。它的性能比较好也是因为**避免了使线程进入内核态的阻塞状态**。想尽办法避免线程进入内核的阻塞状态是我们去分析和理解锁设计的关键钥匙。
 
 **和synchronized区别：**
 
 ​		1、**底层实现**：synchronized 是**JVM**层面的锁，是**Java关键字**，通过monitor对象来完成（monitorenter与monitorexit），ReentrantLock 是从jdk1.5以来（java.util.concurrent.locks.Lock）提供的**API层面**的锁。
 
-​		2、**实现原理****：synchronized 的实现涉及到**锁的升级**，具体为无锁、偏向锁、自旋锁、向OS申请重量级锁；ReentrantLock实现则是通过利用**CAS**（CompareAndSwap）自旋机制保证线程操作的原子性和volatile保证数据可见性以实现锁的功能。
+​		2、**实现原理**：synchronized 的实现涉及到**锁的升级**，具体为无锁、偏向锁、自旋锁、向OS申请重量级锁；ReentrantLock实现则是通过利用**CAS**（CompareAndSwap）自旋机制保证线程操作的原子性和volatile保证数据可见性以实现锁的功能。
 
 ​		3、**是否可手动释放：**synchronized 不需要用户去手动释放锁，synchronized 代码执行完后系统会自动让线程释放对锁的占用； ReentrantLock则需要用户去手动释放锁，如果没有手动释放锁，就可能导致**死锁现象**。
 
@@ -2527,7 +2524,7 @@ JDK 内置的拒绝策略如下：
 
 ​		**缺点：**你们可能也发现了，这样可能导致队列中间的线程一直获取不到锁或者长时间获取不到锁
 
-<img src="https://s0.lgstatic.com/i/image3/M01/02/7D/Ciqah157DAiAK_DJAAC0JawhGp4730.png" alt="img" style="zoom:67%;" />
+![](https://s0.lgstatic.com/i/image3/M01/02/7D/Ciqah157DAiAK_DJAAC0JawhGp4730.png)
 
 **公平锁效率低原因：**
 
@@ -2627,11 +2624,11 @@ private static ThreadLocal<SimpleDateFormat> format1 = new ThreadLocal<SimpleDat
 
 **ThreadLocal内存泄漏的场景** 
 
-​		实际上 ThreadLocalMap 中使用的 **key 为 ThreadLocal 的弱引用，⽽ value 是强引⽤**。弱引用的特点是，如果这个对象持有弱引用，那么在下一次垃圾回收的时候必然会被清理掉。
+​		实际上 ThreadLocalMap 中使用的 **key 为 ThreadLocal 的弱引用，⽽ value 是强引⽤**。弱引用的特点是，如果这个对象持有弱引用，那么在下一次垃圾回收的时候必然会被清理掉。（**弱引用**对象相比软引用来说，要更加无用一些，它拥有更短的生命周期，当 JVM 进行垃圾回收时，**无论内存是否充足**，都会回收被弱引用关联的对象。）
 
 ​		所以如果 ThreadLocal 没有被外部强引用的情况下，在垃圾回收的时候会被清理掉的，这样一来 ThreadLocalMap中使用这个 ThreadLocal 的 key 也会被清理掉。但是，value 是强引用，不会被清理，这样一来就会出现 key 为 null 的 value。 假如我们不做任何措施的话，value 永远⽆法被GC 回收，如果线程长时间不被销毁，可能会产⽣内存泄露。
 
-<img src="https://s0.lgstatic.com/i/image3/M01/68/C4/Cgq2xl5Pld-AHFhJAADLtGXmSxc833.png" alt="img" style="zoom:67%;" />
+![](https://s0.lgstatic.com/i/image3/M01/68/C4/Cgq2xl5Pld-AHFhJAADLtGXmSxc833.png)
 
 ​		ThreadLocalMap实现中已经考虑了这种情况，在调用 set()、get()、remove() 方法的时候，会清理掉 key 为 null 的记录。如果说会出现内存泄漏，那只有在出现了 key 为 null 的记录后，没有手动调用 remove() 方法，并且之后也不再调用 get()、set()、remove() 方法的情况下。因此使⽤完ThreadLocal ⽅法后，**最好⼿动调⽤ remove() ⽅法**。
 
@@ -2657,7 +2654,30 @@ private static ThreadLocal<SimpleDateFormat> format1 = new ThreadLocal<SimpleDat
 
 4. 线程安全，因为具备不变性的对象一定是线程安全的
 
-   
+
+遇到一个关于String很有意思的题目：
+
+题目1：String s1 = new String("abc");这句话创建了几个字符串对象？
+
+将创建 1 或 2 个字符串。如果池中已存在字符串常量“abc”，则只会在堆空间创建一个字符串常量“abc”。如果池中没有字符串常量“abc”，那么它将首先在池中创建，然后在堆空间中创建，因此将创建总共 2 个字符串对象。
+
+题目2：
+
+```java
+String str1 = "str";
+String str2 = "ing";
+
+String str3 = "str" + "ing";//常量池中的对象
+String str4 = str1 + str2; //在堆上创建的新的对象，实际它等价于：new StringBuilder().append(str1).append(str2)
+String str5 = "string";//常量池中的对象
+System.out.println(str3 == str4);//false
+System.out.println(str3 == str5);//true
+System.out.println(str4 == str5);//false
+```
+
+![](http://image.leeyom.top/blog/20210811152535.png)
+
+
 
 ### 内存模型
 
@@ -2677,23 +2697,19 @@ private static ThreadLocal<SimpleDateFormat> format1 = new ThreadLocal<SimpleDat
 
 **有序性**
 
-​		在 Java 中，可以使用 Synchronized 和 Volatile 来保证多线程之间操作的有序性。区别：Volatile 禁止指令重排。Synchronized 保证同一时刻只允许一条线程操作。
-
-
+​		在 Java 中，可以使用 Synchronized 和 Volatile 来保证多线程之间操作的有序性。区别：**Volatile 禁止指令重排**。Synchronized 保证同一时刻只允许一条线程操作。
 
 #### **1、volatile底层实现**
 
 **作用：**
 
-​		保证数据的“可见性”：被volatile修饰的变量能够保证每个线程能够获取该变量的最新值，从而避免出现数据脏读的现象。
+​		保证数据的“可见性”：被volatile修饰的变量能够保证每个线程能够获取该变量的最新值，从而避免出现数据脏读的现象，volatile只能修饰变量。
 
 ​		禁止指令重排：在多线程操作情况下，指令重排会导致计算结果不一致
 
 **底层实现：**
 
-​		“观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，**会多出一个lock前缀指令**”
-
-　　lock前缀指令实际上相当于一个**内存屏障**（也成内存栅栏），内存屏障会提供3个功能：
+​		观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，**会多出一个lock前缀指令**，lock前缀指令实际上相当于一个**内存屏障**（也成内存栅栏），内存屏障会提供3个功能：
 
 　　1）它确保指令重排序时不会把其后面的指令排到内存屏障之前的位置，也不会把前面的指令排到内存屏障的后面；
 
@@ -2708,9 +2724,7 @@ private static ThreadLocal<SimpleDateFormat> format1 = new ThreadLocal<SimpleDat
 ```java
 class Singleton{
     private volatile static Singleton instance = null;   //禁止指令重排
-    private Singleton() {
-         
-    }
+    private Singleton() {}
     public static Singleton getInstance() {
         if(instance==null) { //减少加锁的损耗
             synchronized (Singleton.class) {
@@ -2727,7 +2741,7 @@ class Singleton{
 
 #### **2、AQS思想** 
 
-​		AQS的全称为（AbstractQueuedSynchronizer）抽象的队列式的同步器，是⼀个⽤来构建锁和同步器的框架，使⽤AQS能简单且⾼效地构造出应⽤⼴泛的⼤量的同步器，如：基于AQS实现的lock, CountDownLatch、CyclicBarrier、Semaphore需解决的问题：
+​		AQS的全称为（AbstractQueuedSynchronizer）抽象的队列式的同步器，是⼀个⽤来构建锁和同步器的框架，使⽤AQS能简单且⾼效地构造出应⽤⼴泛的⼤量的同步器，如：基于AQS实现的 ReentrantLock、CountDownLatch、CyclicBarrier、Semaphore需解决的问题：
 
 ```
 状态的原子性管理
@@ -2737,9 +2751,9 @@ class Singleton{
 
 ​		AQS核⼼思想是，如果被请求的共享资源空闲，则将当前请求资源的线程设置为有效的⼯作线程，并且将共享资源设置为锁定状态。如果被请求的共享资源被占⽤，那么就需要⼀套线程阻塞等待以及被唤醒时锁分配的机制，这个机制AQS是⽤**CLH（虚拟的双向队列）**队列锁实现的，即将暂时获取不到锁的线程加⼊到队列中。
 
-**lock：**
+**ReentrantLock：**
 
-​		是一种可重入锁，除了能完成 synchronized 所能完成的所有工作外，还提供了诸如可响应中断锁、可轮询锁请求、定时锁等避免多线程死锁的方法。默认为非公平锁，但可以初始化为公平锁； 通过方法 lock()与 unlock()来进行加锁与解锁操作；
+​		是一种可重入锁，除了能完成 synchronized 所能完成的所有工作外，还提供了诸如可响应中断锁、可轮询锁请求、定时锁等避免多线程死锁的方法。默认为非公平锁（false非公平锁），但可以初始化为公平锁； 通过方法 lock()与 unlock()来进行加锁与解锁操作；
 
 **CountDownLatch：**
 
@@ -2799,7 +2813,7 @@ NoSQL数据库四大家族
 
 ​	Aerospike作为一个大容量的NoSql解决方案，适合对**容量要求比较大，QPS相对低**一些的场景，主要用在广告行业，**个性化推荐厂告**是建立在了和掌握消费者独特的偏好和习性的基础之上，对消费者的购买需求做出准确的预测或引导，在合适的位置、合适的时间，以合适的形式向消费者呈现与其需求高度吻合的广告，以此来促进用户的消费行为。
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmam43b44bj30d90d4aa7.jpg" alt="image-20210103170039711" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmam43b44bj30d90d4aa7.jpg)
 
 ​	（ETL数据仓库技术）抽取（extract）、转换（transform）、加载（load）
 
@@ -2859,7 +2873,7 @@ match data=(na:Person{name:"范闲"})-[*1..2]-(nb:Person) return data
 
 > MongoDB 是一个基于分布式文件存储的数据库，是非关系数据库中功能最丰富、最像关系数据库的。在高负载的情况下，通过添加更多的节点，可以保证服务器性能。由 C++ 编写，可以为 WEB 应用提供可扩展、高性能、易部署的数据存储解决方案。
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmaqyp75qsj312q0i8q5f.jpg" alt="image-20210103194830654" style="zoom:80%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmaqyp75qsj312q0i8q5f.jpg)
 
 **什么是BSON**
 
@@ -2897,15 +2911,13 @@ db.collection.remove({where}, {justOne: <boolean>, writeConcern: <回执> } )
 
 
 
-
-
 MySQL 8.0 版本
 
 **1. 性能**：MySQL 8.0 的速度要比 MySQL 5.7 快 2 倍。
 
 **2. NoSQL**：MySQL 从 5.7 版本开始提供 NoSQL 存储功能，在 8.0 版本中nosql得到了更大的改进。
 
-**3. 窗口函数**：实现若干新的查询方式。窗口函数与 SUM()、COUNT() 这种集合函数类似，但它不会将多行查询结果合并为一行，而是将结果放回多行当中，即窗口函数不需要 GROUP BY。
+**3. 窗口函数**：实现若干新的查询方式。窗口函数与 SUM()、COUNT() 这种集合函数类似，但它不会将多行查询结果合并为一行，而是将结果放回多行当中，即窗口函数不需要 GROUP BY。（题外话，count(col)的返回结果为 0，但 sum(col)的返回结果为 NULL，因此使用 sum()时需注意 NPE 问题。）
 
 **4. 隐藏索引**：在 MySQL 8.0 中，索引可以被“隐藏”和“显示”。当对索引进行隐藏时，它不会被查询优化器所使用。我们可以使用这个特性用于性能调试，例如我们先隐藏一个索引，然后观察其对数据库的影响。如果数据库性能有所下降，说明这个索引是有用的，然后将其“恢复显示”即可；如果数据库性能看不出变化，说明这个索引是多余的，可以考虑删掉。
 
@@ -2989,11 +3001,11 @@ MySQL 8.0 版本
 
 **上传**
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gmfhvk0wwzj30ue0h4dlw.jpg" alt="image-20210107222155291" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gmfhvk0wwzj30ue0h4dlw.jpg)
 
 **下载**
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gmfhww8zmfj30uw0g6n37.jpg" alt="image-20210107222312338" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gmfhww8zmfj30uw0g6n37.jpg)
 
 **断点续传**
 
@@ -3064,7 +3076,7 @@ disk_writer_threads：单个磁盘写线程数
 
 **实现保证：**
 
-​		MySQL的存储引擎InnoDB使用重做日志保证一致性与持久性，回滚日志保证原子性，使用各种锁来保证隔离性。
+​		MySQL的存储引擎InnoDB使用重做日志（redo log）保证一致性与持久性，回滚日志（undo log）保证原子性，使用各种锁（行锁、间隙锁、表锁）来保证隔离性。
 
 
 
