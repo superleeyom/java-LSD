@@ -3049,20 +3049,6 @@ disk_writer_threads：单个磁盘写线程数
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ### 事务
 
 #### **1、事务4大特性** 
@@ -3100,7 +3086,11 @@ disk_writer_threads：单个磁盘写线程数
 | 可重复读 | 可能会导致幻读                   |
 | 可串行化 | 不会产⽣⼲扰                     |
 
+脏读：A事务读取B事务尚未提交的数据，此时如果B事务发生错误并执行回滚操作，那么A事务读取到的数据就是脏数据
 
+不可重复读：前后多次读取，数据内容不一致
+
+幻读：前后多次读取，数据总量不一致
 
 #### **3、默认隔离级别-RR** 
 
@@ -3110,14 +3100,14 @@ disk_writer_threads：单个磁盘写线程数
 
 ​		可重复读是有可能出现幻读的，如果要保证绝对的安全只能把隔离级别设置成SERIALIZABLE；这样所有事务都只能顺序执行，自然不会因为并发有什么影响了，但是性能会下降许多。
 
-​		第二种方式，使用MVCC解决**快照读幻读问题**（如简单select），读取的不是最新的数据。维护一个字段作为version，这样可以控制到每次只能有一个人更新一个版本。
+​		第二种方式，使用MVCC解决**快照读幻读问题**（如简单select），读取的不是最新的数据。维护一个字段作为version，这样可以控制到每次只能有一个人更新一个版本（乐观锁）。
 
 ```mysql
 select id from table_xx where id = ? and version = V
 update id from table_xx where id = ? and version = V+1
 ```
 
-​		第三种方式，如果需要读最新的数据，可以通过GapLock+Next-KeyLock可以解决**当前读幻读问题**，
+​		第三种方式，如果需要读最新的数据，可以通过GapLock+Next-KeyLock可以解决**当前读幻读问题**（悲观锁），
 
 ```mysql
 select id from table_xx where id > 100 for update;
@@ -3247,7 +3237,7 @@ https://draveness.me/whys-the-design-mysql-b-plus-tree/
 
 ​		B+树是B树的升级版，B+树只有叶节点存放数据，其余节点用来索引。索引节点可以全部加入内存，增加查询效率，叶子节点可以做双向链表，从而**提高范围查找的效率，增加的索引的范围**
 
-​		在大规模数据存储的时候，红黑树往往出现由于**树的深度过大**而造成磁盘IO读写过于频繁，进而导致效率低下的情况。所以，只要我们通过某种较好的树结构减少树的结构尽量减少树的高度，B树与B+树可以有多个子女，从几十到上千，可以降低树的高度。
+​		在大规模数据存储的时候，红黑树往往出现由于**树的深度过大**而造成磁盘IO读写过于频繁，进而导致效率低下的情况。所以，只要我们通过某种较好的树结构减少树的结构尽量减少树的高度，B树与B+树可以有多个子女，从几十到上千，可以降低树的高度，高度为 3 的 B+ 树就能够存储千万级别的数据，实践中 B+ 树的高度最多也就 4 或者 5。
 
 [^页存储]: 自mysql5.7后，提供了一个设定page大小的参数innodb_page_size，默认值是16K。我们可以通过来改变page的大小来间接改变m树B+树的m的大小。比如我们现在要存20G大小的数据，那么page=16K和page=4K，树的高度是不一样的。换句话说，树的高度是根据你要存下的数据是多少来决定的。
 
@@ -3255,9 +3245,9 @@ https://draveness.me/whys-the-design-mysql-b-plus-tree/
 
 补充：
 
-B+树的优势：
+总的来说B+树的优势：
 
-- 单一节点存储更多元素，减少IO
+- 单一节点存储更多元素，减少磁盘IO
 - 所有查询都要找到叶子节点，查询稳定
 - 所有叶子节点形成有序链表，方便范围查询
 
@@ -3289,15 +3279,20 @@ INDEX和KEY:用于指定字段为索引，两者选择其中之一就可以了�
 
 5.**尽量的扩展索引，不要新建索引**。比如表中已经有a的索引，现在要加(a,b)的索引，那么只需要修改原来的索引即可。
 
+6.**模糊查询 column like 'key%'，column列需要加索引**
+
 #### **5、聚簇索引和非聚簇索引** 
 
-​	**聚簇索引：**将数据存储与索引放到了一块，索引结构的叶子节点保存了行数据（**主键索引**）
+​	**聚簇索引：**将数据存储与索引放到了一块，索引结构的叶子节点保存了行数据（**主键索引**， `<id, row>` 的方式存储）
 
-​	**非聚簇索引：**将数据与索引分开存储，索引结构的叶子节点指向了数据对应的位置（**辅助索引**）
+​	**非聚簇索引：**将数据与索引分开存储，索引结构的叶子节点指向了数据对应的位置（**辅助索引**，`<index, id>`方式存储）
 
 ​	聚簇索引的叶子节点就是数据节点，而非聚簇索引的叶子节点仍然是索引节点，只不过有指向对应数据块的指针。
 
+这其实也比较好理解：
 
+- 在主键索引中，`id` 是主键，我们能够通过 `id` 找到该行的全部列；
+- 在辅助索引中，索引中的几个列构成了键，我们能够通过索引中的列找到 `id`，如果有需要的话，可以再通过 `id` 找到当前数据行的全部内容；
 
 #### 6、最左前缀问题
 
@@ -3305,7 +3300,7 @@ INDEX和KEY:用于指定字段为索引，两者选择其中之一就可以了�
 
 ​		联合索引的底层是一颗B+树，只不过联合索引的B+树节点中存储的是键值。由于构建一棵B+树只能根据一个值来确定索引关系，所以数据库依赖联合索引最左的字段来构建。
 
-​		采用>、<等进行匹配都会导致后面的列无法走索引，因为通过以上方式匹配到的数据是不可知的。
+​		采用`>、<`等进行匹配都会导致后面的列无法走索引，因为通过以上方式匹配到的数据是不可知的。
 
  
 
@@ -3321,7 +3316,7 @@ INDEX和KEY:用于指定字段为索引，两者选择其中之一就可以了�
 select * from student  A where A.age='18' and A.name='张三';
 ```
 
-<img src="http://s0.lgstatic.com/i/image2/M01/8B/0F/CgotOV14ySKAMxohAAH2VHcAzkE612.png" alt="img" style="zoom: 67%;" />
+![](http://s0.lgstatic.com/i/image2/M01/8B/0F/CgotOV14ySKAMxohAAH2VHcAzkE612.png)
 
 结合上面的说明，我们分析下这个语句的执行流程：
 
@@ -3331,9 +3326,9 @@ select * from student  A where A.age='18' and A.name='张三';
 
 ③由解析器进行语法语义解析，并生成解析树。如查询是select、表名tb_student、条件是id='1'
 
-④查询优化器生成执行计划。根据索引看看是否可以优化
+④查询优化器生成执行计划，根据索引看看是否可以优化
 
-⑤查询执行引擎执行 SQL 语句，根据存储引擎类型，得到查询结果。若开启了 Query Cache，则缓存，否则直接返回。
+⑤查询执行引擎执行 SQL 语句，根据存储引擎类型，得到查询结果，若开启了 Query Cache，则缓存SQL，避免下次二次解析，否则直接返回。
 
 
 
@@ -3349,7 +3344,7 @@ select * from student  A where A.age='18' and A.name='张三';
 
 **覆盖索引**：主键索引==聚簇索引==覆盖索引
 
-​	如果where条件的列和返回的数据在一个索引中，那么不需要回查表，那么就叫覆盖索引。
+​	如果where条件的列和select返回的数据在一个索引中，那么不需要回查表，那么就叫覆盖索引。
 
 **实现覆盖索引**：常见的方法是，将被查询的字段，建立到联合索引里去。
 
@@ -3371,9 +3366,9 @@ mysql> explain select * from staff;
 
 **索引优化：**
 
-​	①最左前缀索引：like只用于'string%'，语句中的=和in会动态调整顺序
+​	①最左前缀索引：**like只用于'string%'**，语句中的=和in会动态调整顺序
 
-​	②唯一索引：唯一键区分度在0.1以上
+​	②唯一索引：唯一键区分度在0.1以上，只对区分度较高的字段加索引
 
 ​	③无法使用索引：!=  、is null 、 or、>< 、（**5.7以后根据数量自动判定）in 、not in**
 
@@ -3383,8 +3378,6 @@ mysql> explain select * from staff;
 SELECT uid From user Where gid = 2 order by ctime asc limit 10
 ALTER TABLE user add index idx_gid_ctime_uid(gid,ctime,uid) #创建联合覆盖索引，避免回表查询
 ```
-
-
 
 **语句优化：**
 
@@ -3422,17 +3415,17 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 
 ​	②第二范式（2NF）属性完全依赖于主键 [ 消除部分子函数依赖 ]
 
-​	③第三范式（3NF）属性不依赖于其它非主属性 [ 消除传递依赖 ]
+​	③第三范式（3NF）属性不依赖于其它非主属性 [ 消除传递依赖、字段冗余 ]
 
 **配置优化：**
 
-​	配置连接数、禁用Swap、增加内存、升级SSD硬盘
+​	配置连接数、**禁用Swap**、增加内存、升级SSD硬盘
 
 
 
 #### 4、JOIN查询 
 
-<img src="https://image-static.segmentfault.com/276/780/2767807589-5c122586a23c4_articlex" style="align:left;zoom: 60%;" />
+![](https://image-static.segmentfault.com/276/780/2767807589-5c122586a23c4_articlex)
 
 **left join(左联接)** 返回包括左表中的所有记录和右表中关联字段相等的记录 
 
@@ -3468,6 +3461,8 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 
 ​		在cache里记录哪些记录发生过的写请求，来路由读主库还是读从库
 
+![](http://image.leeyom.top/blog/20210811170410.png)
+
 **异步复制：**
 
 ​		在异步复制中，主库执行完操作后，写入binlog日志后，就返回客户端，这一动作就结束了，并不会验证从库有没有收到，完不完整，所以这样可能**会造成数据的不一致**。
@@ -3492,11 +3487,11 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 
 ​		当写节点 Master db1 出现故障时，由 MMM Monitor 或 Keepalived 触发切换脚本，将 VIP 漂移到可用的 Master db2 上。当出现网络抖动或网络分区时，MMM Monitor 会误判，严重时来回切换写 VIP 导致集群双写，当数据复制延迟时，应用程序会出现数据错乱或数据冲突的故障。有效避免单点失效的架构就是采用共享存储，单点故障切换可以通过分布式哨兵系统监控。
 
-<img src="http://s0.lgstatic.com/i/image2/M01/89/48/CgoB5l12KuGALf-cAAGuHVmMkHs743.png" alt="img" style="zoom: 67%;" />
+![](http://s0.lgstatic.com/i/image2/M01/89/48/CgoB5l12KuGALf-cAAGuHVmMkHs743.png)
 
  **架构选型：**MMM 集群  -> MHA集群 -> MHA+Arksentinel。
 
-<img src="http://s0.lgstatic.com/i/image2/M01/89/68/CgotOV12KuKAe_HOAABl-wRATa0772.png" alt="img"  />
+![](http://s0.lgstatic.com/i/image2/M01/89/68/CgotOV12KuKAe_HOAABl-wRATa0772.png)
 
 
 
@@ -3518,7 +3513,9 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 
 #### 分库分表
 
-##### 如何进行分库分表
+**如何进行分库分表**
+
+![](http://image.leeyom.top/blog/20210811180941.png)
 
 > **分表**用户id进行分表，每个表控制在300万数据。
 >
@@ -3534,9 +3531,11 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 - **range**方便扩容和数据统计
 - **hash**可以使得数据更加平均
 
+![](http://image.leeyom.top/blog/20210811172402.png)
+
 **垂直拆分**：一个表拆成多个表，可以将一些冷数据拆分到冗余库中
 
-
+![](http://image.leeyom.top/blog/20210811172448.png)
 
 > 不是写瓶颈优先进行分表
 
@@ -3570,9 +3569,15 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 
 - 深分页问题：按游标查询，或者叫每次查询都带上上一次查询经过排序后的最大 ID
 
+#### 数据脱敏
 
+参考文章：https://github.com/superleeyom/blog/issues/32
 
+采用中间件Sharding-jdbc，通过对用户输入的SQL进行解析，并依据用户提供的脱敏配置对SQL进行改写，从而实现对原文数据进行加密，并将原文数据(可选)及密文数据同时存储到底层数据库。在用户查询数据时，它又从数据库中取出密文数据，并对其解密，最终将解密后的原始数据返回给用户。
 
+![](http://image.leeyom.top/blog/20210811173020.png)
+
+![](http://image.leeyom.top/blog/20210811173054.png)
 
 #### 如何将老数据进行迁移
 
@@ -3617,7 +3622,7 @@ select * from mytbl inner ori join (select id from mytbl order by id limit 10000
 
 其中机器预留的10bit可以根据自己的业务场景配置
 
-
+具体的可以参考文档：https://github.com/superleeyom/blog/issues/16
 
 
 
@@ -3734,21 +3739,7 @@ int getUserSize() {
 
 这是因为 MyBatis 循环处理 batch 的时候，操作对象是数组，而我们在接口定义的时候，使用的是 List；当传入一个非常大的 List 时，它需要调用 List 的 toArray 方法将列表转换成数组（浅拷贝）；在最后的拼装阶段，又使用了 StringBuilder 来拼接最终的 SQL，所以实际使用的内存要比 List 多很多。
 
-事实证明，不论是插入操作还是查询动作，只要涉及的数据集非常大，就容易出现问题。由于项目中众多框架的引入，想要分析这些具体的内存占用，就变得非常困难。所以保持小批量操作和结果集的干净，是一个非常好的习惯。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+事实证明，不论是插入操作还是查询动作，只要涉及的数据集非常大，就容易出现问题。由于项目中众多框架的引入，想要分析这些具体的内存占用，就变得非常困难。所以保持小批量操作和结果集的干净，是一个非常好的习惯
 
 
 
