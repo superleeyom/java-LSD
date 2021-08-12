@@ -4451,8 +4451,8 @@ public void write(String key,Object data){
 ​	 ②节点如果收到了RequestVote或者AppendEntries，就会保持自己的Follower身份 
 
 ​	 ③节点如果一段时间内没收到AppendEntries消息，在该节点的超时时间内还没发现Leader，Follower就会转换成Candidate，自己开始竞选Leader。 一旦转化为Candidate，该节点立即开始下面几件事情:
-​		--增加自己的term，启动一个新的定时器
-​		--给自己投一票，向所有其他节点发送RequestVote，并等待其他节点的回复。
+​		- 增加自己的term，启动一个新的定时器
+​		- 给自己投一票，向所有其他节点发送RequestVote，并等待其他节点的回复。
 
 ​	 ④如果在计时器超时前，节点收到多数节点的同意投票，就转换成Leader。同时通过 AppendEntries，向其他节点发送通知。
 
@@ -4530,7 +4530,7 @@ Object result = jedis.eval(lua, Collections.singletonList(lockKey),
 
 - **客户端长时间阻塞导致锁失效问题**
 
-​	计算时间内异步启动另外一个线程去检查的问题，这个key是否超时，当锁超时时间快到期且逻辑未执行完，延长锁超时时间。
+​	计算时间内异步启动另外一个(守护)线程去检查问题，这个key是否超时，当锁超时时间快到期且逻辑未执行完，延长锁超时时间。
 
 - **Redis服务器时钟漂移问题导致同时加锁
   redis的过期时间是依赖系统时钟的，如果时钟漂移过大时 理论上是可能出现的 **会影响到过期时间的计算。
@@ -4550,6 +4550,12 @@ Object result = jedis.eval(lua, Collections.singletonList(lockKey),
 - **主从切换导致的两个客户端同时持有锁**
 
   大部分情况下**持续时间极短**，而且使用**Redlock在切换的瞬间**获取到节点的锁，也存在问题。已经是极低概率的时间，无法避免。**Redis分布式锁适合幂等性事务**，如果一定要**保证安全**，应该**使用Zookeeper或者DB**，但是，**性能会急剧下降**。
+
+- **锁误解除**
+
+  如果线程 A 成功获取到了锁，并且设置了过期时间 30 秒，但线程 A 执行时间超过了 30 秒，锁过期自动释放，此时线程 B 获取到了锁；随后 A 执行完成，线程 A 使用 DEL 命令来释放锁，但此时线程 B 加的锁还没有执行完成，线程 A 实际释放的线程 B 加的锁。
+
+  解决方案：通过在 value 中设置当前线程加锁的标识，在删除之前验证 key 对应的 value 判断锁是否是当前线程持有。
 
 
 
@@ -4577,9 +4583,9 @@ Object result = jedis.eval(lua, Collections.singletonList(lockKey),
 
 ​	Redisson是基于NIO的Netty框架上的一个Java驻内存数据网格(In-Memory Data Grid)分布式锁开源组件。 
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1glurlfrrp4j30qk0g876c.jpg" alt="image-20201221000119586" style="zoom:67%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1glurlfrrp4j30qk0g876c.jpg)
 
-但当业务必须要数据的强一致性，即不允许重复获得锁，比如金融场景(重复下单，重复转账)，**请不要使用redis分布式锁**。可以使用CP模型实现，比如:**zookeeper和etcd。**
+但当业务必须要数据的强一致性，即不允许重复获得锁，比如金融场景(重复下单，重复转账)，**请不要使用redis分布式锁**。可以使用CP模型实现，比如：**zookeeper和etcd。**
 
 |            | Redis    | zookeeper  | etcd       |
 | ---------- | -------- | ---------- | ---------- |
@@ -4651,53 +4657,11 @@ min-slaves-max-lag 10 (min-replicas-max-lag 10)
 **缓存安全性**
 	对于缓存的安全性考虑，一方面可以限制来源 IP，只允许内网访问，同时加密鉴权访问。
 
-
-
 #### 2、Redis热升级
 
 > 在 Redis 需要升级版本或修复 bug 时，如果直接重启变更，由于需要数据恢复，这个过程需要近 10 分钟的时间，时间过长，会严重影响系统的可用性。面对这种问题，可以对 Redis 扩展热升级功能，从而在毫秒级完成升级操作，完全不影响业务访问。
 
 热升级方案如下，首先构建一个 Redis 壳程序，将 redisServer 的所有属性（包括redisDb、client等）保存为全局变量。然后将 Redis 的处理逻辑代码全部封装到动态连接库 so 文件中。Redis 第一次启动，从磁盘加载恢复数据，在后续升级时，通过指令，壳程序重新加载 Redis 新的 redis-4.so 到 redis-5.so 文件，即可完成功能升级，毫秒级完成 Redis 的版本升级。而且整个过程中，所有 Client 连接仍然保留，在升级成功后，原有 Client 可以继续进行读写操作，整个过程对业务完全透明。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # 六、Kafka篇
 
@@ -4709,7 +4673,7 @@ min-slaves-max-lag 10 (min-replicas-max-lag 10)
 
 如果是**大数据领域**的实时计算、日志采集等场景，用 **Kafka** 是业内标准的，绝对没问题，社区活跃度很高，绝对不会黄，何况几乎是全世界这个领域的事实性规范。
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gmfiyienm0j30zu0hago7.jpg" alt="image-20210107225921930" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gmfiyienm0j30zu0hago7.jpg)
 
 
 
@@ -4723,7 +4687,7 @@ RabbitMQ开始是用在电信业务的可靠通信的，也是少有的几款**�
 - 支持灵活的路由配置。RabbitMQ中，在生产者和队列之间有一个交换器模块。根据配置的路由规则，生产者发送的消息可以发送到不同的队列中。路由规则很灵活，还可以自己实现。
 - RabbitMQ的客户端支持大多数的编程语言，支持**AMQP**协议。
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gmfjicxzb2j30u80hx0uw.jpg" alt="image-20210107231826261" style="zoom:40%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gmfjicxzb2j30u80hx0uw.jpg)
 
 **缺点：**
 
@@ -4768,7 +4732,7 @@ RabbitMQ开始是用在电信业务的可靠通信的，也是少有的几款**�
 - Consumer API：允许应用程序订阅一个或多个主题并处理为其生成的记录流。
 - Streams API：允许应用程序充当流处理器，将输入流转换为输出流。
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gme95cirjfj31000kb41j.jpg" alt="image-20210106203420526" style="zoom: 40%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gme95cirjfj31000kb41j.jpg)
 
 
 
@@ -4863,7 +4827,7 @@ RabbitMQ开始是用在电信业务的可靠通信的，也是少有的几款**�
 
 ### **生产消费基本流程**
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gmeb1cw09gj313m0kgwgb.jpg" alt="image-20210106213944461" style="zoom:40%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gmeb1cw09gj313m0kgwgb.jpg)
 
 1. Producer创建时，会创建一个Sender线程并设置为守护线程。
 
@@ -4948,7 +4912,7 @@ kafka-topics.sh --zookeeper localhost:2181/myKafka --describe --topic topic_x
 
 通过查询跳跃表`ConcurrentSkipListMap`，定位到在00000000000000000000.index ，通过二分法在偏移量索引文件中找到不大于 23 的**最大索引项**，即offset 20 那栏，然后从日志分段文件中的物理位置为320 开始顺序查找偏移量为 23 的消息。
 
-<img src="https://img-blog.csdnimg.cn/20191230225447849.PNG?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQwMjMzNzA2,size_16,color_FFFFFF,t_70" alt="img" style="zoom:50%;" />
+![](https://img-blog.csdnimg.cn/20191230225447849.PNG)
 
 
 
@@ -4982,7 +4946,7 @@ ProducerID：#在每个新的Producer初始化时，会被分配一个唯一的P
 SequenceNumber：#对于每个PID发送数据的每个Topic都对应一个从0开始单调递增的SN值
 ```
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gmefjpeet8j317e0cgmyp.jpg" alt="image-20210107001546404" style="zoom:80%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gmefjpeet8j317e0cgmyp.jpg)
 
 **如何选举**
 
@@ -5182,7 +5146,7 @@ return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 
 死亡：当对象长时间不用且没有其它对象引用时，由java的垃圾回收机制回收
 
-<img src="https://s0.lgstatic.com/i/image3/M01/89/0C/Cgq2xl6WvHqAdmt4AABGAn2eSiI631.png" alt="img" style="zoom:67%;" />
+![](https://s0.lgstatic.com/i/image3/M01/89/0C/Cgq2xl6WvHqAdmt4AABGAn2eSiI631.png)
 
 IOC容器初始化加载Bean流程：
 
@@ -5301,7 +5265,7 @@ Spring中循环依赖场景有:
 
 **三级缓存解决循环依赖问题**
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1glv7ivru2lj31980qcn13.jpg" alt="循环依赖问题" style="zoom: 33%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1glv7ivru2lj31980qcn13.jpg)
 
 1. Spring容器初始化ClassA通过构造器初始化对象后提前暴露到Spring容器中的singletonFactorys（三级缓存中）。
 
@@ -5397,7 +5361,7 @@ public @interface EnableAutoConfiguration
 
 **SpringMVC原理** 
 
-<img src="https://img-blog.csdn.net/20181022224058617?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2F3YWtlX2xxaA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" style="zoom: 50%;" />
+![](https://img-blog.csdn.net/20181022224058617?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2F3YWtlX2xxaA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
 
 1. 客户端（浏览器）发送请求，直接请求到  DispatcherServlet 。
 2. DispatcherServlet 根据请求信息调⽤  HandlerMapping ，解析请求对应的  Handler 。
@@ -5512,16 +5476,6 @@ public @interface EnableAutoConfiguration
 
 **适配器模式：**Spring AOP 的增强或通知(Advice)使⽤到了适配器模式、spring MVC 中也是⽤到了适配器模式适配 Controller 。
 
-
-
-
-
-
-
-
-
-
-
 # 八、SpringCloud篇
 
 #### Why SpringCloud
@@ -5544,7 +5498,7 @@ public @interface EnableAutoConfiguration
 - RPC：基于TCP协议，序列化和传输效率提升明显
 - MQ：异步解耦微服务之间的调用
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmawejgpgwj30ht0bnt9d.jpg" alt="img" style="zoom:67%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmawejgpgwj30ht0bnt9d.jpg)
 
 #### Spring Boot
 
@@ -5623,25 +5577,15 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
   请求前`post`类型的过滤器：做**响应内容**、**响应头**的修改、**⽇志的输出**、**流量监控**等。
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmc49l9babj31do0n7n13.jpg" alt="image-20210105001419761" style="zoom: 50%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmc49l9babj31do0n7n13.jpg)
 
 **GateWayFilter** 应⽤到单个路由路由上 、**GlobalFilter** 应⽤到所有的路由上
-
-
-
-
-
-
-
-
-
-
 
 #### Eureka / Zookeeper
 
 > 服务注册中⼼本质上是为了解耦服务提供者和服务消费者，为了⽀持弹性扩缩容特性，⼀个微服务的提供者的数量和分布往往是动态变化的。
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmawwm3k7bj30o80ecq3u.jpg" alt="image-20210103231405882" style="zoom: 50%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmawwm3k7bj30o80ecq3u.jpg)
 
 | 区别   | Zookeeper        | Eureka                       | Nacos              |
 | ------ | ---------------- | ---------------------------- | ------------------ |
@@ -5653,7 +5597,7 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
 **Eureka**通过**⼼跳检测**、**健康检查**和**客户端缓存**等机制，提⾼系统的灵活性、可伸缩性和可⽤性。
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmaxc493qyj30ji0a6mxx.jpg" alt="image-20210103232900353" style="zoom:67%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmaxc493qyj30ji0a6mxx.jpg)
 
 1. us-east-1c、us-east-1d，us-east-1e代表不同的机房，**每⼀个Eureka Server都是⼀个集群**。
 2. Service作为服务提供者向Eureka中注册服务，Eureka接受到注册事件会在**集群和分区中进⾏数据同步**，Client作为消费端（服务消费者）可以从Eureka中获取到服务注册信息，进⾏服务调⽤。
@@ -5667,7 +5611,7 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
 > 新服务上线后，服务消费者**不能立即访问**到刚上线的新服务，需要过⼀段时间后才能访问？或是将服务下线后，服务还是会被调⽤到，⼀段时候后**才彻底停⽌服务**，访问前期会导致频繁报错！
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmaxmk97q0j30vw0j6gmu.jpg" alt="image-20210103233902439" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmaxmk97q0j30vw0j6gmu.jpg)
 
 ​	服务注册到注册中⼼后，服务实例信息是**存储在Registry表**中的，也就是内存中。但Eureka为了提⾼响应速度，在内部做了优化，加⼊了两层的缓存结构，将Client需要的实例信息，直接缓存起来，获取的时候直接从缓存中拿数据然后响应给 Client。 
 
@@ -5703,7 +5647,7 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 - Feign 可以与 Hystrix 组合使用，支持熔断回退
 - Feign 可以与ProtoBuf实现快速的RPC调用
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmbxsh2rfnj30uo0fgmxz.jpg" alt="img" style="zoom:80%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmbxsh2rfnj30uo0fgmxz.jpg)
 
 - **InvocationHandlerFactory 代理**
 
@@ -5759,7 +5703,7 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
 **Ribbon**
 
-<img src="http://s0.lgstatic.com/i/image2/M01/93/96/CgotOV2Nux-AO2PcAAEcl4M1Zi4629.png" alt="img" style="zoom: 50%;" />
+![](http://s0.lgstatic.com/i/image2/M01/93/96/CgotOV2Nux-AO2PcAAEcl4M1Zi4629.png)
 
 
 
@@ -5771,7 +5715,7 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
 - **Ribbon + Feign**
 
-  <img src="http://s0.lgstatic.com/i/image2/M01/93/76/CgoB5l2NuyCALoefAAAdV1DlSHY088.png" alt="img" style="zoom: 67%;" />
+  ![](http://s0.lgstatic.com/i/image2/M01/93/76/CgoB5l2NuyCALoefAAAdV1DlSHY088.png)
 
 **负载均衡算法**
 
@@ -5814,7 +5758,7 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
 消费方：使用Hystrix资源隔离，熔断降级，快速失败
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmby7y9ykzj30wr0ehac5.jpg" alt="img" style="zoom:150%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmby7y9ykzj30wr0ehac5.jpg)
 
 **Hystrix断路保护器的作用**
 
@@ -5863,7 +5807,7 @@ Hystrix区别：
 - 独⽴可部署Dashboard（基于 Spring Boot 开发）控制台组件
 - 不依赖任何框架/库，减少代码开发，通过UI界⾯配置即可完成细粒度控制
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmbza4zixbj30kl09sq4p.jpg" alt="image-20210104212151598" style="zoom:80%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmbza4zixbj30kl09sq4p.jpg)
 
 **丰富的应⽤场景**：Sentinel 承接了阿⾥巴巴近 10 年的双⼗⼀⼤促流量的核⼼场景，例如秒杀、消息削峰填⾕、集群流量控制、实时熔断下游不可⽤应⽤等。
 
@@ -5888,11 +5832,7 @@ Hystrix区别：
 | 控制台         | 开箱即用，可配置规则、查看秒级监控、机器发现等 | 不完善                        |
 | 常见框架的适配 | Servlet、Spring Cloud、Dubbo、gRPC             | Servlet、Spring Cloud Netflix |
 
-
-
-
-
-#### Config / Nacos
+#### Config / Nacos / Apollo
 
 > Nacos是阿⾥巴巴开源的⼀个针对微服务架构中**服务发现**、**配置管理**和**服务管理平台**。
 >
@@ -5919,7 +5859,25 @@ Hystrix区别：
 
 可以通过 Spring Cloud 原⽣注解 `@RefreshScope` 实现配置⾃动更新
 
+**Apollo**：
 
+如下即是Apollo的基础模型：
+
+1. 用户在配置中心对配置进行修改并发布
+2. 配置中心通知Apollo客户端有配置更新
+3. Apollo客户端从配置中心拉取最新的配置、更新本地配置并通知到应用
+
+![](http://image.leeyom.top/blog/20210812213108.png)
+
+上图简要描述了Apollo的总体设计，我们可以从下往上看：
+
+- Config Service提供配置的读取、推送等功能，服务对象是Apollo客户端
+- Admin Service提供配置的修改、发布等功能，服务对象是Apollo Portal（管理界面）
+- Config Service和Admin Service都是多实例、无状态部署，所以需要将自己注册到Eureka中并保持心跳
+- 在Eureka之上我们架了一层Meta Server用于封装Eureka的服务发现接口
+- Client通过域名访问Meta Server获取Config Service服务列表（IP+Port），而后直接通过IP+Port访问服务，同时在Client侧会做load balance、错误重试
+- Portal通过域名访问Meta Server获取Admin Service服务列表（IP+Port），而后直接通过IP+Port访问服务，同时在Portal侧会做load balance、错误重试
+- 为了简化部署，我们实际上会把Config Service、Eureka和Meta Server三个逻辑角色部署在同一个JVM进程中
 
 #### Bus / Stream
 
@@ -5933,7 +5891,7 @@ Hystrix区别：
 
 **全链路追踪**
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmc3avezqrj30xb0lw76z.jpg" alt="image-20210104234058218" style="zoom:67%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmc3avezqrj30xb0lw76z.jpg)
 
 **Trace ID**：当请求发送到分布式系统的⼊⼝端点时，Sleuth为该请求创建⼀个唯⼀的跟踪标识Trace ID，在分布式系统内部流转的时候，框架始终保持该唯⼀标识，直到返回给请求⽅
 
@@ -5967,7 +5925,15 @@ Spring Cloud Sleuth （追踪服务框架）可以追踪服务之间的调⽤，
 
 > JWT（JSON Web Token）用户提供用户名和密码给认证服务器，服务器验证用户提交信息的合法性；如果验证成功，会产生并返回一个 Token，用户可以使用这个 Token 访问服务器上受保护的资源。
 
-<img src="http://s0.lgstatic.com/i/image2/M01/AB/87/CgotOV3WUG2ARl98AAD_xcd-ElM857.png" alt="img" style="zoom:70%;" />
+**JWT 本质上就一段签名的 JSON 格式的数据。由于它是带有签名的，因此接收者便可以验证它的真实性。**
+
+JWT 由 3 部分构成:
+
+1. **Header** : 描述 JWT 的元数据，定义了生成签名的算法以及 `Token` 的类型。
+2. **Payload** : 用来存放实际需要传递的数据
+3. **Signature（签名）** ：服务器通过`Payload`、`Header`和一个密钥(`secret`)使用 `Header` 里面指定的签名算法（默认是 HMAC SHA256）生成。
+
+![](http://s0.lgstatic.com/i/image2/M01/AB/87/CgotOV3WUG2ARl98AAD_xcd-ElM857.png)
 
 1. 认证服务提供认证的 API，校验用户信息，返回认证结果
 2. 通过JWTUtils中的RSA算法，生成JWT token，token里封装用户id和有效期
@@ -6020,7 +5986,7 @@ Spring Cloud Sleuth （追踪服务框架）可以追踪服务之间的调⽤，
 
 > 基于Discovery 服务注册发现、Ribbon 负载均衡、Feign 和 RestTemplate 调用等组件的企业级微服务开源解决方案，包括灰度发布、灰度路由、服务隔离等功能
 
-<img src="https://s0.lgstatic.com/i/image3/M01/54/41/CgpOIF3nXSaAB9bRAAE8rktrUyY037.png" alt="img" style="zoom:50%;" />
+![](https://s0.lgstatic.com/i/image3/M01/54/41/CgpOIF3nXSaAB9bRAAE8rktrUyY037.png)
 
 1. 首先将需要发布的服务从转发过程中移除，等流量剔除之后再发布。
 
@@ -6038,7 +6004,7 @@ grayVersions = {"discovery-article-service":["1.01"]}
 
 
 
-<img src="https://s0.lgstatic.com/i/image3/M01/54/41/Cgq2xl3nXSeAZMTOAAE2sCaIhPE668.png" alt="img" style="zoom:50%;" />
+![](https://s0.lgstatic.com/i/image3/M01/54/41/Cgq2xl3nXSeAZMTOAAE2sCaIhPE668.png)
 
 
 
@@ -6233,15 +6199,9 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 
 **全量缓存保证高效读取**
 
-<img src="/Users/suhongliu/Library/Application Support/typora-user-images/image-20210418185425386.png" alt="image-20210418185425386" style="zoom:50%;" />
-
 所有数据都存储在缓存里，读服务在查询时不会再降级到数据库里，所有的请求都完全依赖缓存。此时，因降级到数据库导致的毛刺问题就解决了。但全量缓存并**没有解决更新时的分布式事务**问题，反而把问题放大了。因为全量缓存**对数据更新要求更加严格**，要求所有数据库**已有数据和实时更新**的数据必须完全同步至缓存，不能有遗漏。对于此问题，一种有效的方案是采用**订阅数据库的 Binlog** 实现数据同步
 
-<img src="/Users/suhongliu/Library/Application Support/typora-user-images/image-20210418185457610.png" alt="image-20210418185457610" style="zoom:50%;" />
-
 ​	现在很多开源工具（如**阿里的 Canal**等）可以模拟主从复制的协议。通过模拟协议读取主数据库的 Binlog 文件，从而获取主库的所有变更。对于这些变更，它们开放了各种接口供业务服务获取数据。
-
-<img src="/Users/suhongliu/Library/Application Support/typora-user-images/image-20210418185516743.png" alt="image-20210418185516743" style="zoom:50%;" />
 
 ​	将 Binlog 的中间件挂载至目标数据库上，就可以**实时获取该数据库的所有变更数据**。对这些变更数据解析后，便可**直接写入缓存里**。优点还有：
 
@@ -6252,8 +6212,6 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
   如果同步缓存失败了，被消费的 Binlog 不会被确认，下一次会重复消费，数据最终会写入缓存中
 
 **缺点**不可避免：1、增加复杂度 2、消耗缓存资源 3、需要筛选和压缩数据 4、极端情况数据丢失
-
-<img src="/Users/suhongliu/Library/Application Support/typora-user-images/image-20210418185549520.png" alt="image-20210418185549520" style="zoom:50%;" />
 
 可以通过异步校准方案进行补齐，但是会损耗数据库性能。但是此方案会隐藏中间件使用错误的细节，线上环境前期更重要的是记录日志排查在做后续优化，不能本末倒置。
 
@@ -6273,24 +6231,12 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 
 #### **多机房实时热备**
 
-<img src="/Users/suhongliu/Library/Application Support/typora-user-images/image-20210418185610597.png" alt="6.png" style="zoom:50%;" />
-
 两套缓存集群可以分别部署到不同城市的机房。读服务也相应地部署到不同城市或不同分区。在承接请求时，不同机房或分区的读服务只依赖同样属性的缓存集群。此方案有两个好处。
 
 1. **提升了性能。**读服务不要分层，读服务要尽可能地和缓存数据源靠近。
 2. **增加了可用。**当单机房出现故障时，可以秒级将所有流量都切换至存活的机房或分区
 
 此方案虽然带来了性能和可用性的提升，但代价是资源成本的上升。
-
-
-
-
-
-
-
-
-
-
 
 ### 分区容错性
 
@@ -6330,7 +6276,11 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 
 ### 分布式事务
 
+参考文章：https://github.com/doocs/advanced-java/blob/main/docs/distributed-system/distributed-transaction.md
+
 #### XA方案 
+
+![](http://image.leeyom.top/blog/20210812214142.png)
 
 **两阶段提交** | **三阶段提交**
 
@@ -6340,6 +6290,8 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 
 
 #### TCC方案 
+
+![](http://image.leeyom.top/blog/20210812214121.png)
 
 **Try Confirm Cancel / 短事务**
 
@@ -6353,17 +6305,20 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 
 #### **Saga方案** 
 
+![](http://image.leeyom.top/blog/20210812214101.png)
+
 事务性补偿 / 长事务
 
 - 流程**长**、流程**多**、调用第三方业务
 
-  
 
 #### **本地消息表（eBay）**
 
+![](http://image.leeyom.top/blog/20210812214031.png)
+
 #### **MQ最终一致性**	
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gmr1k3dfbxj31h00pkjy8.jpg" alt="image-20210117220405706" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gmr1k3dfbxj31h00pkjy8.jpg)
 
 比如阿里的 RocketMQ 就支持消息事务（核心：**双端确认，重试幂等**）
 
