@@ -4971,6 +4971,14 @@ SequenceNumber：#对于每个PID发送数据的每个Topic都对应一个从0�
 
 ### 面试题
 
+![](http://image.leeyom.top/blog/20210812215414.png)
+
+关于消息队列的连环炮，参考资料：
+
+- [消息队列连环炮](https://github.com/doocs/advanced-java)
+- [RocketMQ入门](https://snailclimb.gitee.io/javaguide/#/docs/system-design/distributed-system/message-queue/RocketMQ)
+- [RocketMQ 的几个简单问题与答案](https://snailclimb.gitee.io/javaguide/#/docs/system-design/distributed-system/message-queue/RocketMQ-Questions)
+
 #### **线上问题rebalance**
 
 > 因集群架构变动导致的消费组内重平衡，如果kafka集内节点较多，比如数百个，那重平衡可能会耗时导致**数分钟到数小时**，此时kafka基本处于不可用状态，对kafka的TPS影响极大
@@ -6347,6 +6355,20 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 如果是一般的分布式事务场景，例如**积分**数据，可以用可靠消息**最终一致性方案**
 
 如果分布式场景**允许不一致**，可以使用最大努力通知方案
+
+### 分布式 ID
+
+具体可以参考文章：https://github.com/superleeyom/blog/issues/16
+
+#### UUID
+
+#### 数据库自增
+
+#### 数据库多主模式
+
+#### 号段模式
+
+#### 雪花算法
 
 
 
