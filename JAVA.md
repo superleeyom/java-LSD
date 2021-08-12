@@ -3765,7 +3765,7 @@ int getUserSize() {
 
 ​		2）数据结构简单，对数据操作也简单，Redis 中的数据结构是专门进行设计的；
 
-​		3）采用单线程，避免了多线程不必要的上下文切换和竞争条件，不存在加锁释放锁操作，减少了因为锁竞争导致的性能消耗；（6.0以后多线程）
+​		3）采用单线程，避免了多线程不必要的上下文切换和竞争条件，不存在加锁释放锁操作，减少了因为锁竞争导致的性能消耗；（6.0以后多线程，**提高网络 IO 读写性能**）
 
 ​		4）使用EPOLL多路 I/O 复用模型，非阻塞 IO；
 
@@ -3901,7 +3901,7 @@ EVCache典型地适合对强一致性没有必须要求的场合
 
 典型用例：Netflflix向用户推荐用户感兴趣的电影
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmapdnh0yaj30ku0aigmc.jpg" alt="image-20210103185340548" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmapdnh0yaj30ku0aigmc.jpg)
 
 **EVCache集群**在峰值每秒可以处理**200kb**的请求，
 
@@ -3917,7 +3917,7 @@ EVCache集群的缓存命中率在99%左右。
 
 EVCache 是线性扩展的，可以在一分钟之内完成扩容，在几分钟之内完成负载均衡和缓存预热。
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gmapg99q8lj30ix0f3jrw.jpg" alt="image-20210103185611516" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gmapg99q8lj30ix0f3jrw.jpg)
 
 1、集群启动时，EVCache向服务注册中心（Zookeeper、Eureka）注册各个实例
 
@@ -3930,8 +3930,6 @@ EVCache 是线性扩展的，可以在一分钟之内完成扩容，在几分钟
 #### 6、ETCD
 
 ​	**和Zookeeper一样，CP模型追求数据一致性，**越来越多的系统开始用它保存关键数据。比如，秒杀系统经常用它**保存各节点信**息，以便控制消费 MQ 的服务数量。还有些业务系统的**配置数据**，也会通过 etcd 实时同步给业务系统的各节点，比如，秒杀管理后台会使用 etcd 将秒杀活动的**配置数据实时同步给秒杀 API 服务各节点**。
-
-![image-20210418174251742](/Users/suhongliu/Library/Application Support/typora-user-images/image-20210418174251742.png)
 
 
 
@@ -4025,11 +4023,13 @@ struct sdshdr{
 
 **Redis Stream**的底层主要使用了listpack(紧凑列表)和Rax树(基数树)。
 
-​	**listpack**表示一个字符串列表的序列化，listpack可用于存储字符串或整数。用于存储stream的消息内 容。
+​	**listpack**表示一个字符串列表的序列化，listpack可用于存储字符串或整数。用于存储stream的消息内容。
 
 ​	**Rax树**是一个有序字典树 (基数树 Radix Tree)，按照 key 的字典序排列，支持快速地定位、插入和删除操 作。
 
+**过期字典**
 
+![](http://image.leeyom.top/blog/20210812150435.png)
 
 #### 4、Zset底层实现
 
@@ -4055,11 +4055,13 @@ struct sdshdr{
 
 ### **Redis可用性**
 
+更加详细的可以参考文章：https://github.com/superleeyom/blog/issues/9
+
 #### 1、redis持久化 
 
 持久化就是把内存中的数据持久化到本地磁盘，防止服务器宕机了内存数据丢失
 
-Redis 提供两种持久化机制 **RDB（默认）** 和 **AOF 机制**，Redis4.0以后采用混合持久化，用 AOF 来**保证数据不丢失**，作为数据恢复的第一选择; 用 RDB 来做不同程度的**冷备**
+Redis 提供两种持久化机制 **RDB（默认）** 和 **AOF 机制**，Redis4.0以后采用混合持久化，用 AOF 来**保证数据不丢失**，作为数据恢复的第一选择; 用 RDB 来做不同程度的**冷备**。
 
 **RDB：**是Redis DataBase缩写快照
 
@@ -4077,17 +4079,23 @@ Redis 提供两种持久化机制 **RDB（默认）** 和 **AOF 机制**，Redis
 
 ​	**缺点：**
 
-​	数据安全性低，RDB 是间隔一段时间进行持久化，如果持久化之间 redis 发生故障，会发生数据丢失。
+​	数据安全性低，RDB 是间隔一段时间进行持久化，如果持久化之间 redis 发生故障，会发生数据丢失。**间隔越长，停机时丢失的数据也就越多。**
+
+​	**命令**：
+
+​	SAVE（同步、阻塞）、BGSAVE（异步）、save seconds changes（满足配置项则执行BGSAVE）
 
 **AOF：持久化**
 
-​		AOF持久化(即Append Only File持久化)，则是将Redis执行的每次写命令记录到单独的日志文件中，当重启Redis会重新将持久化的日志中文件恢复数据。
+​		AOF持久化(即Append Only File持久化)，则是将Redis执行的每次写命令记录到单独的日志文件中，当重启Redis会重新将持久化的日志中文件恢复数据，使用`appendonly yes`：即可开启 AOF 持久化功能。
 
 ​	**优点：**
 
-​	1）数据安全，aof 持久化可以配置 appendfsync 属性，有 always，每进行一次 命令操作就记录到 aof 文件中一次。
+​	1）数据安全，aof 持久化可以配置 appendfsync 属性，有 always，每进行一次命令操作就记录到 aof 文件中一次，Redis 使用`everysec`作为`appendfsync`选项的默认值，每隔 1s，就对 AOF 文件执行一次冲洗操作。
 
 ​	2）通过 append 模式写文件，即使中途服务器宕机，可以通过 redis-check-aof 工具解决数据一致性问题。
+
+​	3）随着服务器不断运行，被执行的命令将变得越来越多，而负责记录这些命令的 AOF 文件也会变得越来越大。Redis 提供了 AOF 重写功能`BGREWRITEAOF`命令，AOF 重写功能可以减少冗余命令，让AOF保持苗条。
 
 **缺点：**
 
@@ -4103,7 +4111,7 @@ Redis 提供两种持久化机制 **RDB（默认）** 和 **AOF 机制**，Redis
 
 **Redis事务的概念**
 
-​		Redis 事务的本质是通过MULTI、EXEC、WATCH等一组命令的集合。事务支持一次执行多个命令，一个事务中所有命令都会被序列化。在事务执行过程，会按照顺序串行化执行队列中的命令，其他客户端提交的命令请求不会插入到事务执行命令序列中。总结说：redis事务就是一次性、顺序性、排他性的执行一个队列中的一系列命令。
+​		Redis 事务的本质是通过**MULTI、EXEC、WATCH**等一组命令的集合。事务支持一次执行多个命令，一个事务中所有命令都会被序列化。在事务执行过程，会按照顺序串行化执行队列中的命令，其他客户端提交的命令请求不会插入到事务执行命令序列中。总结说：redis事务就是一次性、顺序性、排他性的执行一个队列中的一系列命令。
 
 Redis的事务总是具有ACID中的**一致性和隔离性**，其他特性是不支持的。当服务器运行在AOF持久化模式下，并且appendfsync选项的值为always时，事务也具有耐久性。
 
@@ -4125,7 +4133,11 @@ Redis事务功能是通过MULTI、EXEC、DISCARD和WATCH 四个原语实现的
 
 #### 3、redis失效策略 
 
+具体可以参考文章：https://github.com/superleeyom/blog/issues/12
+
 **内存淘汰策略**
+
+当 Redis 所用内存达到 `maxmemory` 上限时会触发相应的溢出控制策略：
 
 1）全局的键空间选择性移除
 
@@ -4145,11 +4157,13 @@ Redis事务功能是通过MULTI、EXEC、DISCARD和WATCH 四个原语实现的
 
 **缓存失效策略**
 
-​	**定时清除：**针对每个设置过期时间的key都创建指定定时器
+删除到达过期时间的键对象，Redis有如下的几种策略：
 
-​	**惰性清除：**访问时判断，对内存不友好
+​	**定时清除：**针对每个设置过期时间的key都创建指定定时器，会占用过多的cpu时间，服务器吞吐量降低
 
-​	**定时扫描清除：**定时100ms随机20个检查过期的字典，若存在25%以上则继续循环删除。
+​	**惰性清除：**访问时判断是否过期，浪费内存，有内存泄漏的危险
+
+​	**定时扫描清除：**定时100ms随机20个检查过期的字典，若存在25%以上则继续循环删除。(每隔一段时间，程序就对数据库进行一次检查，删除里面的过期键。至于要删除多少过期键，以及要检查多少个数据库，则由算法决定。)
 
 #### 4、redis读写模式
 
@@ -4157,11 +4171,15 @@ Redis事务功能是通过MULTI、EXEC、DISCARD和WATCH 四个原语实现的
 
 写请求更新数据库后删除缓存数据。读请求不命中查询数据库，查询完成写入缓存
 
-<img src="https://img-blog.csdnimg.cn/20200806194316539.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2x6eF92aWN0b3J5,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述" style="zoom: 15%;" />
+**写请求**：
 
-<img src="https://img-blog.csdnimg.cn/20200806194300826.png" style="zoom: 15%;" />
+![](http://image.leeyom.top/blog/20210812154437.png)
 
-​	业务端处理所有数据访问细节，同时利用 **Lazy 计算**的思想，更新 DB 后，直接删除 cache 并通过 DB 更新，确保数据以 DB 结果为准，则可以大幅降低 cache 和 DB 中数据不一致的概率
+**读请求：**
+
+![](http://image.leeyom.top/blog/20210812154540.png)
+
+​	业务端处理所有数据访问细节，同时利用 **Lazy 计算**的思想，更新 DB 后，直接删除 cache 并通过 DB 更新，确保数据以 DB 结果为准，则可以大幅降低 cache 和 DB 中数据不一致的概率。
 
 ​	如果没有专门的存储服务，同时是对**数据一致性要求比较高的业务，或者是缓存数据更新比较复杂的业务**，适合使用 Cache Aside 模式。如微博发展初期，不少业务采用这种模式
 
@@ -4182,17 +4200,17 @@ public void write(String key,Object data){
 - 先删redis后更新db休眠后删redis：同第二点，休眠后删除redis 可能宕机
 - java内部jvm队列：不适用分布式场景且降低并发
 
-
+![](http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg)
 
 ​	**Read/Write Though**（读写穿透）
 
 ​		**先查询**缓存中数据是否存在,如果存在则直接返回,如果**不存在**,则由**缓存组件负责从数据库中同步加载数据.**
 
-​	<img src="https://img-blog.csdnimg.cn/20200806194334623.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2x6eF92aWN0b3J5,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述" style="zoom: 50%;" />
+​	![](https://img-blog.csdnimg.cn/20200806194334623.png)
 
 ​	先查询要**写入的数据在缓存中**是否已经存在,如果已经存在,则**更新缓存中的数据**，并且由**缓存组件同步更新**到数据库中。
 
-​	<img src="https://img-blog.csdnimg.cn/20200806194346642.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2x6eF92aWN0b3J5,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述" style="zoom: 50%" />
+​	![](https://img-blog.csdnimg.cn/20200806194346642.png)
 
 ​	用户**读操作**较多.相较于Cache aside而言更适合缓存一致的场景。使用简单屏蔽了**底层数据库的操作**,只是操作缓存.
 
@@ -4204,7 +4222,7 @@ public void write(String key,Object data){
 
 **Write Behind Caching（异步缓存写入）**
 
-<img src="https://tva1.sinaimg.cn/large/008eGmZEly1gorlsg74i6j31950e3dhs.jpg" alt="img" style="zoom:35%;" />
+![](https://tva1.sinaimg.cn/large/008eGmZEly1gorlsg74i6j31950e3dhs.jpg)
 
 比如对一些计数业务，一条 **Feed 被点赞** 1万 次，如果更新 1万 次 DB 代价很大，而合并成一次请求直接加 1万，则是一个非常轻量的操作。但这种模型有个显著的缺点，即数据的一致性变差，甚至在一些极端场景下可能会丢失数据。
 
@@ -4261,8 +4279,6 @@ public void write(String key,Object data){
 
 [布隆过滤器原理](https://github.com/Snailclimb/JavaGuide/blob/master/docs/dataStructures-algorithms/data-structure/bloom-filter.md)
 
-
-
 #### **3、缓存击穿**
 
 ​		这时由于并发用户特别多，同时读缓存没读到数据，又同时去数据库去取数据，引起数据库压力瞬间增大，造成过大压力。和缓存雪崩不同的是，缓存击穿指并发查同一条数据，缓存雪崩是不同数据都过期了，很多数据都查不到从而查数据库
@@ -4273,13 +4289,11 @@ public void write(String key,Object data){
 
 ​	2）加**写回操作加互斥锁**，查询失败默认值快速返回。
 
-​	3）缓存预热
+​	3）因为有的数据首次请求一定不在cache中，可以提前**缓存预热**
 
 ​		系统上线后，将相关**可预期（例如排行榜）**热点数据直接加载到缓存。
 
 ​		写一个缓存刷新页面，手动操作热点数据**（例如广告推广）**上下线。
-
-
 
 #### 4、数据不一致
 
@@ -4290,8 +4304,6 @@ public void write(String key,Object data){
 - 缓存时间适当调短，让缓存数据及早过期后，然后从 DB 重新加载，确保数据的最终一致性。
 
 - 不采用 rehash 漂移策略，而采用缓存分层策略，尽量避免脏数据产生。
-
-http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg
 
 #### 5、数据并发竞争
 
@@ -4343,6 +4355,8 @@ http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg
 
 **Hash：（不稳定）**
 
+​		公式：id=hash(key)%N
+
 ​		客户端分片：哈希+取余
 
 ​		节点伸缩：数据节点关系变化，导致数据迁移
@@ -4350,6 +4364,8 @@ http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg
 ​		迁移数量和添加节点数量有关：建议翻倍扩容
 
 ​		一个简单直观的想法是直接用Hash来计算，以Key做哈希后对节点数取模。可以看出，在key足够分散的情况下，均匀性可以获得，但一旦有节点加入或退出，所有的原有节点都会受到影响，稳定性无从谈起。
+
+![](http://image.leeyom.top/blog/20210812162354.png)
 
 **一致性Hash：（不均衡）**
 
@@ -4361,21 +4377,25 @@ http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg
 
 ​		一致性Hash可以很好的解决稳定问题，可以将所有的存储节点排列在收尾相接的Hash环上，每个key在计算Hash后会顺时针找到先遇到的一组存储节点存放。而当有节点加入或退出时，仅影响该节点在Hash环上顺时针相邻的后续节点，将数据从该节点接收或者给予。但这又带来均匀性的问题，即使可以将存储节点等距排列，也会在**存储节点个数变化时带来数据的不均匀**。
 
+![](http://image.leeyom.top/blog/20210812163837.png)
+
 **Codis的Hash槽**
 
 ​		Codis 将所有的 key 默认划分为 1024 个槽位(slot)，它首先对客户端传过来的 key 进行 crc32 运算计算 哈希值，再将 hash 后的整数值对 1024 这个整数进行取模得到一个余数，这个余数就是对应 key 的槽位。
 
 **RedisCluster**
 
+​		公式：slot = CRC16(key) % 16384
+
 ​		Redis-cluster把所有的物理节点映射到[0-16383]个**slot**上,对key采用crc16算法得到hash值后对16384取模，基本上采用平均分配和连续分配的方式。
 
-
+![](http://image.leeyom.top/blog/20210812163608.png)
 
 #### **2、主从模式=简单**
 
 ​	主从模式最大的优点是**部署简单**，最少**两个节点便可以构成主从模式**，并且可以通过**读写分离避免读和写同时不可用**。不过，一旦 Master 节点出现故障，主从节点就**无法自动切换**，直接导致 SLA 下降。所以，主从模式一般**适合业务发展初期，并发量低，运维成本低**的情况
 
-<img src="https://s0.lgstatic.com/i/image/M00/80/25/Ciqc1F_QgPOAaL8TAAC5EiNlvo4795.png" alt="Drawing 1.png" style="zoom:50%;" />
+![](https://s0.lgstatic.com/i/image/M00/80/25/Ciqc1F_QgPOAaL8TAAC5EiNlvo4795.png)
 
 
 
@@ -4387,9 +4407,11 @@ http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg
 
 ​	③主节点会将这个 RDB 发送给从节点，slave 会先写入本地磁盘，再从本地磁盘加载到内存中
 
-​	④master会将此过程中的写命令写入缓存，从节点**实时同步**这些数据
+​	④master会将此过程中的写命令缓存在内存中，从节点**实时同步**这些数据
 
-​	⑤如果网络断开了连接，自动重连后主节点通过命令传播**增量复制**给从节点部分缺少的数据
+​	⑤如果网络断开了连接，自动重连后，主节点通过命令传播**增量复制**给从节点部分缺少的数据
+
+![](http://image.leeyom.top/blog/20210812164611.png)
 
 **缺点**
 
@@ -4401,7 +4423,7 @@ http://img.stormbuf.top/11ae5e620c63de76448bc658fe6a496f.jpg
 
 ​	由一个或多个sentinel实例组成sentinel集群可以监视一个或多个主服务器和多个从服务器。**哨兵模式适合读请求远多于写请求的业务场景，比如在秒杀系统**中用来缓存活动信息。 如果写请求较多，当集群 Slave 节点数量多了后，Master 节点同步数据的压力会非常大。
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gluq6vlvglj30nw0e076f.jpg" alt="image-20201220231241725" style="zoom:50%;" />
+![](https://tva1.sinaimg.cn/large/0081Kckwly1gluq6vlvglj30nw0e076f.jpg)
 
 当主服务器进入下线状态时，sentinel可以将该主服务器下的某一从服务器升级为主服务器继续提供服务，从而保证redis的高可用性。
 
