@@ -5077,6 +5077,7 @@ SequenceNumber：#对于每个PID发送数据的每个Topic都对应一个从0�
 - **修复consumer**，使其具备消费能力，并且扩容N台
 - 写一个**分发的程序**，将Topic均匀分发到临时Topic中
 - 同时**起N台consumer**，消费不同的**临时Topic**
+- 丢弃无效的且没有用的消息
 
 
 
@@ -6327,6 +6328,8 @@ Raft使用**心跳机制**来触发选举。当server启动时，初始状态都
 #### **MQ最终一致性**	
 
 ![](https://tva1.sinaimg.cn/large/008eGmZEly1gmr1k3dfbxj31h00pkjy8.jpg)
+
+![](http://image.leeyom.top/blog/20210813113423.png)
 
 比如阿里的 RocketMQ 就支持消息事务（核心：**双端确认，重试幂等**）
 
