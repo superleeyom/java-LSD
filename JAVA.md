@@ -2792,6 +2792,8 @@ class Singleton{
 
 ### WhyMysql？
 
+https://mp.weixin.qq.com/s/6UYpYEMX_LD6aVqAbzh8bA
+
 NoSQL数据库四大家族 
 
 - 列存储 Hbase
@@ -3250,6 +3252,8 @@ https://draveness.me/whys-the-design-mysql-b-plus-tree/
 - 单一节点存储更多元素，减少磁盘IO
 - 所有查询都要找到叶子节点，查询稳定
 - 所有叶子节点形成有序链表，方便范围查询
+
+为啥不用b树而是b+树？
 
 
 
@@ -5412,6 +5416,8 @@ public @interface EnableAutoConfiguration
 
 ​    **Mybatis**是一个开源对象关系映射框架，原名：ibatis,2010年由谷歌接管以后更名。是一个半自动化的持久层框架。
 
+​	mybatis的缓存机制：https://tech.meituan.com/2018/01/19/mybatis-cache.html
+
 **区别：**
 
   **开发方面**
@@ -5467,7 +5473,7 @@ public @interface EnableAutoConfiguration
 
 **7) NESTED** （**局部回滚**） 支持当前事务，新增Savepoint点，与当前事务同步提交或回滚。 **嵌套事务一个非常重要的概念就是内层事务依赖于外层事务。外层事务失败时，会回滚内层事务所做的动作。而内层事务操作失败并不会引起外层事务的回滚。**
 
-
+[Spring事务的总结](https://snailclimb.gitee.io/javaguide/#/docs/system-design/framework/spring/Spring%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93)
 
 ### Spring源码阅读
 
@@ -5491,12 +5497,12 @@ public @interface EnableAutoConfiguration
 
 > ​	Spring cloud 是一系列框架的有序集合。它利用 spring boot 的开发便利性巧妙地简化了分布式系统基础设施的开发，如**服务发现注册**、**配置中心**、**消息总线**、**负载均衡**、**断路器**、**数据监控**等，都可以用 spring boot 的开发风格做到一键启动和部署。
 
-| SpringCloud（微服务解决方案）    | Dubbo（分布式服务治理框架） |
-| -------------------------------- | --------------------------- |
-| Rest API （轻量、灵活、swagger） | RPC远程调用（高效、耦合）   |
-| Eureka、Nacos                    | Zookeeper                   |
-| 使用方便                         | 性能好                      |
-| 即将推出SpringCloud2.0           | 断档5年后17年重启           |
+| SpringCloud（微服务解决方案）              | Dubbo（分布式服务治理框架）           |
+| ------------------------------------------ | ------------------------------------- |
+| Rest API （轻量、灵活、swagger）、http协议 | RPC远程调用（高效、耦合）、Netty、TCP |
+| Eureka、Nacos                              | Zookeeper                             |
+| 使用方便                                   | 性能好                                |
+| 即将推出SpringCloud2.0                     | 断档5年后17年重启                     |
 
 ​	SpringBoot是Spring推出用于解决传统框架配置文件冗余,装配组件繁杂的基于Maven的解决方案,**旨在快速搭建单个微服务**，SpringCloud是依赖于SpringBoot的,而SpringBoot并不是依赖与SpringCloud,甚至还可以和Dubbo进行优秀的整合开发
 
