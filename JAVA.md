@@ -5654,7 +5654,7 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
 - 集成SBA以后可以把所有健康状态信息一并返回给eureka
 
-  
+eureka相关的原理可以参考文章：[服务发现组件 Eureka 的几个主要调用过程](https://github.com/doocs/advanced-java/blob/main/docs/micro-services/how-eureka-enable-service-discovery-and-service-registration.md)
 
 #### Feign / Ribbon
 
@@ -5759,7 +5759,17 @@ spring-boot-starter-data-jpa     //用于操作 MySQL。
 
   当线上某个实例发生故障后，为了不影响用户，我们一般都会先留存证据，比如：线程信息、JVM 信息等，然后将这个实例重启或直接停止。然后线下根据一些信息分析故障原因，如果我能做到故障隔离，就可以直接将出问题的实例隔离，不让正常的用户请求访问到这个出问题的实例，只让指定的用户访问，这样就可以单独用特定的用户来对这个出问题的实例进行测试、故障分析等。
 
+对于Ribbon的负载均衡算法，如果不是记得特别清楚可以这样说：
 
+- 随机 (Random)
+- 轮询 (RoundRobin)
+- 一致性哈希 (ConsistentHash)
+- 哈希 (Hash)
+- 加权（Weighted）
+
+如果你记得具体的：
+
+![](http://image.leeyom.top/blog/20210819172159.png)
 
 #### Hystrix / Sentinel
 
