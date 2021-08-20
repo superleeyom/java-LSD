@@ -5517,6 +5517,8 @@ public @interface EnableAutoConfiguration
 
 #### Spring Boot
 
+springboot启动分析：https://www.cnblogs.com/lifullmoon/p/14957434.html
+
 > Spring Boot 通过**简单的步骤**就可以创建一个 Spring 应用。
 >
 > Spring Boot 为 Spring 整合第三方框架提供了**开箱即用功能**。
@@ -5814,8 +5816,8 @@ eureka相关的原理可以参考文章：[服务发现组件 Eureka 的几个�
 - **Gateway中**多用信号量隔离
 
   网关是所有请求的入口，路由的服务数量会很多，几十个到上百个都有可能，如果用线程池隔离，那么需要创建上百个独立的线程池，开销太大，用信号量隔离开销就小很多，还能起到限流的作用。
-  
-  
+
+具体的Hystrix原理可以参考：https://github.com/doocs/advanced-java/blob/main/docs/high-availability/hystrix-thread-pool-current-limiting.md
 
 [^常见问题]: Hystrix的超时时间要⼤于Ribbon的超时时间，因为Hystrix将请求包装了起来，特别需要注意的是，如果Ribbon开启了重试机制，⽐如重试3 次，Ribbon 的超时为 1 秒，那么Hystrix 的超时时间应该⼤于 3 秒，否则就会出现 Ribbon 还在重试中，⽽ Hystrix 已经超时的现象。
 
